@@ -8,7 +8,7 @@ const triggerOverlay = document.getElementById("trigger-overlay");
 const triggerPopup = document.getElementById("trigger-popup");
 
 // Max antal synliga meddelanden i projektor-vyn (äldre tas bort)
-const MAX_MESSAGES = 6;
+const MAX_MESSAGES = 30;
 
 const connection = new signalR.HubConnectionBuilder()
     .withUrl("/chathub")
@@ -65,8 +65,10 @@ function addProjMessage(username, text) {
 
     const avatarEl = document.createElement("div");
     avatarEl.className = "proj-message-avatar";
-    avatarEl.style.backgroundImage = `url("${generateAvatar(username, 42)}")`;
-    avatarEl.style.backgroundSize = "cover";
+    const avatarImg = document.createElement("img");
+    avatarImg.src = generateAvatar(username, 42);
+    avatarImg.alt = username.charAt(0).toUpperCase();
+    avatarEl.appendChild(avatarImg);
 
     const nameEl = document.createElement("div");
     nameEl.className = "proj-message-name";
@@ -81,11 +83,13 @@ function addProjMessage(username, text) {
 
     msg.appendChild(header);
     msg.appendChild(textEl);
-    projMessages.appendChild(msg);
 
-    // Ta bort det äldsta meddelandet om vi passerar maxgränsen
+    // Nyaste meddelandet längst upp till vänster i griden
+    projMessages.insertBefore(msg, projMessages.firstChild);
+
+    // Ta bort äldsta meddelandet (längst ner) om vi passerar maxgränsen
     while (projMessages.children.length > MAX_MESSAGES) {
-        projMessages.removeChild(projMessages.firstChild);
+        projMessages.removeChild(projMessages.lastChild);
     }
 }
 

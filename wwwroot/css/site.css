@@ -457,6 +457,12 @@ html, body {
     overflow: hidden;
 }
 
+.message-avatar img {
+    width: 100%;
+    height: 100%;
+    display: block;
+}
+
 .message-body { display: flex; flex-direction: column; gap: 0.2rem; }
 
 .message-meta {
@@ -594,26 +600,25 @@ html, body {
 .projector-feed {
     flex: 1;
     overflow: hidden;
-    position: relative;
-    padding: 1rem;
+    padding: 0.6rem 0.8rem;
+    display: flex;
 }
 
 #projector-messages {
-    display: flex;
-    flex-direction: column;
-    gap: 0.8rem;
-    position: absolute;
-    bottom: 1rem;
-    left: 1rem;
-    right: 1rem;
+    flex: 1;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 0.45rem;
+    align-content: start;
+    overflow: hidden;
 }
 
 .proj-message {
-    background: rgba(255,255,255,0.04);
-    border-left: 4px solid var(--accent);
+    background: rgba(255,255,255,0.05);
+    border-left: 3px solid var(--accent);
     border-radius: 0 8px 8px 0;
-    padding: 0.7rem 1rem;
-    animation: slideup 0.4s ease;
+    padding: 0.35rem 0.6rem;
+    animation: fadein 0.3s ease;
 }
 
 @keyframes slideup {
@@ -624,30 +629,40 @@ html, body {
 .proj-message-header {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
-    margin-bottom: 0.2rem;
+    gap: 0.35rem;
+    margin-bottom: 0.15rem;
 }
 
 .proj-message-avatar {
-    width: 42px;
-    height: 42px;
+    width: 26px;
+    height: 26px;
     border-radius: 50%;
     background: var(--bg-input);
     flex-shrink: 0;
     overflow: hidden;
 }
 
+.proj-message-avatar img {
+    width: 100%;
+    height: 100%;
+    display: block;
+}
+
 .proj-message-name {
-    font-size: clamp(0.85rem, 2vw, 1rem);
+    font-size: 0.78rem;
     font-weight: 700;
     color: var(--accent);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .proj-message-text {
-    font-size: clamp(1.1rem, 3vw, 1.8rem);
+    font-size: clamp(0.85rem, 1.4vw, 1.1rem);
     font-weight: 500;
     color: var(--text);
     word-break: break-word;
+    line-height: 1.3;
 }
 
 .projector-popup { padding: 2rem 4rem; }

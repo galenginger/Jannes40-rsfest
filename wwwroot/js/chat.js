@@ -172,8 +172,10 @@ function addMessage(username, text) {
 
     const avatar = document.createElement("div");
     avatar.className = "message-avatar";
-    avatar.style.backgroundImage = `url("${generateAvatar(username)}")`;
-    avatar.style.backgroundSize = "cover";
+    const avatarImg = document.createElement("img");
+    avatarImg.src = generateAvatar(username);
+    avatarImg.alt = username.charAt(0).toUpperCase();
+    avatar.appendChild(avatarImg);
 
     const body = document.createElement("div");
     body.className = "message-body";
