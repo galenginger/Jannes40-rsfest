@@ -1,0 +1,48 @@
+using System.Text.Json;
+using JanneFest.Services;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.RazorPages;
+
+namespace JanneFest.Pages;
+
+// Projektor-vy för att visa meddelandeflödet på stor skärm under festen.
+// Kräver att lösenordet angetts men inget användarnamn.
+// Kan INTE skicka meddelanden — bara ta emot och visa.
+public class ProjectorModel : PageModel
+{
+    private readonly TriggerService _triggerService;
+
+    public int TotalWords { get; private set; }
+    public int TotalCombos { get; private set; }
+    public int UnlockedWords { get; private set; }
+    public int UnlockedCombos { get; private set; }
+
+    // Trigger-konfiguration som JSON — skickas till projector.js för mini-konfetti
+    public string WordsJson { get; private set; } = "[]";
+    public string UnlockedWordSetJson { get; private set; } = "[]";
+
+    public ProjectorModel(TriggerService triggerService)
+    {
+        _triggerService = triggerService;
+    }
+
+    public IActionResult OnGet()
+    {
+        // Kräver minst lösenordsautentisering
+        if (HttpContext.Session.GetString("authenticated") != "true")
+            return RedirectToPage("/Index");
+
+        TotalWords = _triggerService.TotalWordCount;
+        TotalCombos = _triggerService.TotalComboCount;
+        UnlockedWords = _triggerService.UnlockedWordCount;
+        UnlockedCombos = _triggerService.UnlockedComboCount;
+
+        var opts = new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
+        WordsJson = JsonSerializer.Serialize(
+            _triggerService.GetAllWords().Select(w => new { w.Word, w.Emoji }), opts);
+        UnlockedWordSetJson = JsonSerializer.Serialize(
+            _triggerService.GetUnlockedWordSet().ToList());
+
+        return Page();
+    }
+}

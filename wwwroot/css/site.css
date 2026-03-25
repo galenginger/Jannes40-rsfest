@@ -1,0 +1,685 @@
+/* ===== Grundinställningar ===== */
+*, *::before, *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+:root {
+    --bg: #0d0d1a;
+    --bg-card: #1a1a2e;
+    --bg-input: #16213e;
+    --accent: #f7b731;
+    --accent2: #e84393;
+    --text: #f0f0f0;
+    --text-muted: #8888aa;
+    --border: #2a2a4a;
+    --radius: 12px;
+    --shadow: 0 4px 24px rgba(0,0,0,0.4);
+}
+
+html, body {
+    height: 100%;
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 16px;
+}
+
+/* ===== Inloggningssida ===== */
+.login-page {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    background: radial-gradient(ellipse at top, #1a0a3a 0%, var(--bg) 70%);
+}
+
+.login-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 2.5rem 2rem;
+    width: 100%;
+    max-width: 440px;
+    box-shadow: var(--shadow);
+    text-align: center;
+}
+
+.login-logo {
+    font-size: 4rem;
+    margin-bottom: 0.5rem;
+    display: block;
+    animation: bounce 2s infinite;
+}
+
+@keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50%       { transform: translateY(-8px); }
+}
+
+.login-card h1 {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: var(--accent);
+    margin-bottom: 0.5rem;
+}
+
+.login-subtitle {
+    color: var(--text-muted);
+    margin-bottom: 2rem;
+    font-size: 0.95rem;
+}
+
+.form-group {
+    text-align: left;
+    margin-bottom: 1.2rem;
+}
+
+.form-group label {
+    display: block;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    margin-bottom: 0.4rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.optional {
+    font-weight: 400;
+    text-transform: none;
+    letter-spacing: 0;
+    font-size: 0.85rem;
+}
+
+.form-input {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-size: 1rem;
+    transition: border-color 0.2s;
+    outline: none;
+}
+
+.form-input:focus {
+    border-color: var(--accent);
+}
+
+.hint {
+    display: block;
+    margin-top: 0.35rem;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+.error-box {
+    background: rgba(232, 67, 147, 0.15);
+    border: 1px solid var(--accent2);
+    color: var(--accent2);
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    margin-bottom: 1.2rem;
+    font-size: 0.9rem;
+}
+
+/* ===== Knappar ===== */
+.btn-primary {
+    width: 100%;
+    padding: 0.85rem;
+    background: var(--accent);
+    color: #111;
+    border: none;
+    border-radius: 8px;
+    font-size: 1.05rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.1s;
+}
+
+.btn-primary:hover  { background: #ffcd3c; }
+.btn-primary:active { transform: scale(0.98); }
+
+.btn-logout {
+    padding: 0.4rem 0.9rem;
+    background: transparent;
+    color: var(--text-muted);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: border-color 0.2s, color 0.2s;
+}
+
+.btn-logout:hover {
+    border-color: var(--accent2);
+    color: var(--accent2);
+}
+
+.btn-send {
+    padding: 0.75rem 1.4rem;
+    background: var(--accent);
+    color: #111;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    white-space: nowrap;
+    flex-shrink: 0;
+    transition: background 0.15s;
+}
+
+.btn-send:hover     { background: #ffcd3c; }
+.btn-send:disabled  { opacity: 0.5; cursor: not-allowed; }
+
+/* ===== Chattsida med sidopanel ===== */
+
+/* Yttre wrapper som håller sidopanel + chattkolumn */
+.chat-app {
+    display: flex;
+    height: 100vh;
+    overflow: hidden;
+}
+
+/* Sidopanelen */
+.sidebar {
+    width: 220px;
+    flex-shrink: 0;
+    background: var(--bg-card);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    transition: width 0.25s ease, opacity 0.25s ease;
+}
+
+.sidebar.sidebar-hidden {
+    width: 0;
+    opacity: 0;
+    overflow: hidden;
+}
+
+.sidebar-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.7rem 0.75rem;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--accent);
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+}
+
+.sidebar-toggle {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    font-size: 0.85rem;
+    padding: 0.1rem 0.3rem;
+    border-radius: 4px;
+    transition: color 0.15s;
+}
+
+.sidebar-toggle:hover { color: var(--text); }
+
+/* Knapp i toppraden för att öppna sidopanelen igen */
+.sidebar-open-btn {
+    background: none;
+    border: none;
+    font-size: 1.1rem;
+    cursor: pointer;
+    padding: 0.1rem 0.3rem;
+    opacity: 0.7;
+    transition: opacity 0.15s;
+}
+
+.sidebar-open-btn:hover { opacity: 1; }
+
+.sidebar-section {
+    padding: 0.6rem 0.75rem 0.25rem;
+}
+
+.sidebar-section-title {
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-muted);
+    margin-bottom: 0.4rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.sidebar-count {
+    font-size: 0.78rem;
+    color: var(--accent);
+    font-weight: 700;
+}
+
+.sidebar-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    margin-bottom: 0.5rem;
+}
+
+.sidebar-item {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.3rem 0.5rem;
+    border-radius: 6px;
+    font-size: 0.88rem;
+    transition: background 0.2s;
+}
+
+.sidebar-item.unlocked {
+    background: rgba(247, 183, 49, 0.08);
+    color: var(--text);
+}
+
+.sidebar-item.locked {
+    color: var(--text-muted);
+    opacity: 0.6;
+}
+
+/* Gul glödeffekt när ett ord precis låstes upp */
+.sidebar-item.just-unlocked {
+    animation: glow-unlock 1.5s ease;
+}
+
+@keyframes glow-unlock {
+    0%   { background: rgba(247, 183, 49, 0.4); }
+    100% { background: rgba(247, 183, 49, 0.08); }
+}
+
+.sw-emoji { font-size: 1rem; flex-shrink: 0; }
+.sw-word  { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sw-hidden { font-style: italic; }
+
+/* Kolumn som håller header + räknare + chatt + input */
+.chat-main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0; /* Förhindrar att flexbarn blåser upp bredden */
+}
+
+/* Behåll gamla .chat-page-stylingen via .chat-main */
+.chat-page {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+.chat-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem 1rem;
+    background: var(--bg-card);
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+}
+
+.chat-header-left {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.chat-logo  { font-size: 1.5rem; }
+
+.chat-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--accent);
+}
+
+.chat-header-right {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+}
+
+.chat-username {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+}
+
+/* ===== Räknare ===== */
+.counters-bar {
+    display: flex;
+    gap: 0.75rem;
+    padding: 0.6rem 1rem;
+    background: var(--bg-card);
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+}
+
+.counter-card {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.4rem 0.8rem;
+    flex: 1;
+    transition: border-color 0.3s;
+}
+
+.counter-card.bump {
+    border-color: var(--accent);
+    animation: counterbump 0.4s ease;
+}
+
+@keyframes counterbump {
+    0%   { transform: scale(1); }
+    50%  { transform: scale(1.08); }
+    100% { transform: scale(1); }
+}
+
+.counter-icon  { font-size: 1.2rem; }
+
+.counter-label {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.counter-value {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--accent);
+}
+
+/* ===== Meddelandeflöde ===== */
+.messages-container {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    scroll-behavior: smooth;
+}
+
+.messages-inner {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    margin-top: auto;
+}
+
+.welcome-message {
+    text-align: center;
+    color: var(--text-muted);
+    padding: 2rem 1rem;
+    font-style: italic;
+}
+
+.message {
+    display: flex;
+    gap: 0.6rem;
+    max-width: 80%;
+    animation: fadein 0.25s ease;
+}
+
+@keyframes fadein {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+.message.own {
+    align-self: flex-end;
+    flex-direction: row-reverse;
+}
+
+.message-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--bg-input);
+    flex-shrink: 0;
+    overflow: hidden;
+}
+
+.message-body { display: flex; flex-direction: column; gap: 0.2rem; }
+
+.message-meta {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
+.message.own .message-meta { text-align: right; }
+
+.message-bubble {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px 12px 12px 2px;
+    padding: 0.55rem 0.85rem;
+    font-size: 0.95rem;
+    word-break: break-word;
+}
+
+.message.own .message-bubble {
+    background: #1e1040;
+    border-color: var(--accent2);
+    border-radius: 12px 12px 2px 12px;
+    box-shadow: 0 0 0 1px rgba(232, 67, 147, 0.25), inset 0 0 12px rgba(232, 67, 147, 0.06);
+}
+
+/* ===== Inmatningsrad ===== */
+.input-area {
+    display: flex;
+    gap: 0.5rem;
+    padding: 0.75rem 1rem;
+    background: var(--bg-card);
+    border-top: 1px solid var(--border);
+    flex-shrink: 0;
+}
+
+.message-input {
+    flex: 1;
+    padding: 0.75rem 1rem;
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-size: 1rem;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.message-input:focus { border-color: var(--accent); }
+
+/* ===== Trigger-overlay (konfetti-popup) ===== */
+.trigger-overlay {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.trigger-popup {
+    background: rgba(20, 10, 40, 0.92);
+    border: 2px solid var(--accent);
+    border-radius: 16px;
+    padding: 1.5rem 2.5rem;
+    text-align: center;
+    animation: popscale 0.35s ease;
+    max-width: 90vw;
+}
+
+@keyframes popscale {
+    0%   { transform: scale(0.5); opacity: 0; }
+    70%  { transform: scale(1.05); }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+.popup-emoji {
+    font-size: 3rem;
+    display: block;
+    margin-bottom: 0.5rem;
+}
+
+.popup-title {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--accent);
+}
+
+.popup-sub {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    margin-top: 0.25rem;
+}
+
+/* ===== Projektor-sida ===== */
+.projector-page {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    background: #050510;
+    overflow: hidden;
+}
+
+.projector-header {
+    text-align: center;
+    padding: 1rem;
+    font-size: clamp(1.5rem, 4vw, 2.5rem);
+    font-weight: 900;
+    color: var(--accent);
+    letter-spacing: 0.05em;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+}
+
+.projector-counters {
+    display: flex;
+    justify-content: center;
+    gap: 2rem;
+    padding: 0.6rem 1rem;
+    background: rgba(255,255,255,0.03);
+    border-bottom: 1px solid var(--border);
+    font-size: clamp(0.9rem, 2vw, 1.1rem);
+    flex-shrink: 0;
+}
+
+.proj-counter {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    color: var(--text-muted);
+}
+
+.proj-counter strong { color: var(--accent); }
+
+.projector-feed {
+    flex: 1;
+    overflow: hidden;
+    position: relative;
+    padding: 1rem;
+}
+
+#projector-messages {
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+    position: absolute;
+    bottom: 1rem;
+    left: 1rem;
+    right: 1rem;
+}
+
+.proj-message {
+    background: rgba(255,255,255,0.04);
+    border-left: 4px solid var(--accent);
+    border-radius: 0 8px 8px 0;
+    padding: 0.7rem 1rem;
+    animation: slideup 0.4s ease;
+}
+
+@keyframes slideup {
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+.proj-message-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.2rem;
+}
+
+.proj-message-avatar {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    background: var(--bg-input);
+    flex-shrink: 0;
+    overflow: hidden;
+}
+
+.proj-message-name {
+    font-size: clamp(0.85rem, 2vw, 1rem);
+    font-weight: 700;
+    color: var(--accent);
+}
+
+.proj-message-text {
+    font-size: clamp(1.1rem, 3vw, 1.8rem);
+    font-weight: 500;
+    color: var(--text);
+    word-break: break-word;
+}
+
+.projector-popup { padding: 2rem 4rem; }
+.projector-popup .popup-emoji  { font-size: 5rem; }
+.projector-popup .popup-title  { font-size: 2.5rem; }
+
+/* ===== Scrollbar ===== */
+::-webkit-scrollbar       { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+/* ===== Responsivitet (mobil) ===== */
+@media (max-width: 600px) {
+    /* Sidopanelen döljs som standard på mobil */
+    .sidebar { width: 0; opacity: 0; overflow: hidden; }
+    .sidebar:not(.sidebar-hidden) { width: 200px; opacity: 1; overflow-y: auto; }
+
+    .chat-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.4rem;
+    }
+
+    .chat-header-right { align-self: flex-end; }
+
+    .message { max-width: 92%; }
+
+    .login-card { padding: 1.75rem 1.25rem; }
+
+    .projector-counters {
+        flex-direction: column;
+        gap: 0.3rem;
+        align-items: center;
+    }
+}

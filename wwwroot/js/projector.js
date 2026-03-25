@@ -1,0 +1,131 @@
+// projector.js — projektor-läge, tar emot meddelanden men kan inte skicka
+// Visar meddelanden i ett stort rullande flöde för visning på storskärm/projektor
+
+const projMessages = document.getElementById("projector-messages");
+const projWordsEl = document.getElementById("proj-words");
+const projCombosEl = document.getElementById("proj-combos");
+const triggerOverlay = document.getElementById("trigger-overlay");
+const triggerPopup = document.getElementById("trigger-popup");
+
+// Max antal synliga meddelanden i projektor-vyn (äldre tas bort)
+const MAX_MESSAGES = 6;
+
+const connection = new signalR.HubConnectionBuilder()
+    .withUrl("/chathub")
+    .withAutomaticReconnect()
+    .build();
+
+connection.on("ReceiveMessage", (username, text, triggers) => {
+    addProjMessage(username, text);
+
+    if (triggers.totalUnlockedWords !== undefined) {
+        projWordsEl.textContent  = triggers.totalUnlockedWords;
+        projCombosEl.textContent = triggers.totalUnlockedCombos;
+    }
+
+    if (triggers.newWords && triggers.newWords.length > 0) {
+        triggers.newWords.forEach(w => {
+            UNLOCKED_WORDS.add(w.word.toLowerCase());
+            showTriggerUnlock(w.emoji, `"${w.word}" upplåst!`, false);
+        });
+    }
+
+    if (triggers.newCombos && triggers.newCombos.length > 0) {
+        triggers.newCombos.forEach(c => showTriggerUnlock(c.emoji, `Kombo: ${c.description}`, true));
+    }
+
+    // Mini-konfetti om meddelandet innehåller ett redan upplåst triggerord
+    const lowerText = text.toLowerCase();
+    const justUnlocked = new Set((triggers.newWords || []).map(w => w.word.toLowerCase()));
+    const alreadyFound = TRIGGER_WORDS.some(tw =>
+        UNLOCKED_WORDS.has(tw.word.toLowerCase()) &&
+        !justUnlocked.has(tw.word.toLowerCase()) &&
+        lowerText.includes(tw.word.toLowerCase())
+    );
+    if (alreadyFound) {
+        confetti({ particleCount: 40, spread: 60, origin: { y: 0.65 }, scalar: 0.8, ticks: 100 });
+    }
+});
+
+// Synka räknare direkt vid anslutning
+connection.on("UpdateCounters", (state) => {
+    projWordsEl.textContent  = state.unlockedWords;
+    projCombosEl.textContent = state.unlockedCombos;
+});
+
+connection.start().catch(err => console.error("SignalR-anslutning misslyckades:", err));
+
+// Lägger till ett nytt meddelande i projektor-vyn och tar bort gamla om det blir för många
+function addProjMessage(username, text) {
+    const msg = document.createElement("div");
+    msg.className = "proj-message";
+
+    const header = document.createElement("div");
+    header.className = "proj-message-header";
+
+    const avatarEl = document.createElement("div");
+    avatarEl.className = "proj-message-avatar";
+    avatarEl.style.backgroundImage = `url("${generateAvatar(username, 42)}")`;
+    avatarEl.style.backgroundSize = "cover";
+
+    const nameEl = document.createElement("div");
+    nameEl.className = "proj-message-name";
+    nameEl.textContent = username;
+
+    header.appendChild(avatarEl);
+    header.appendChild(nameEl);
+
+    const textEl = document.createElement("div");
+    textEl.className = "proj-message-text";
+    textEl.textContent = text; // textContent undviker XSS
+
+    msg.appendChild(header);
+    msg.appendChild(textEl);
+    projMessages.appendChild(msg);
+
+    // Ta bort det äldsta meddelandet om vi passerar maxgränsen
+    while (projMessages.children.length > MAX_MESSAGES) {
+        projMessages.removeChild(projMessages.firstChild);
+    }
+}
+
+function showTriggerUnlock(emoji, title, isCombo) {
+    triggerPopup.innerHTML = `
+        <span class="popup-emoji">${emoji}</span>
+        <div class="popup-title">${escapeHtml(title)}</div>
+        <div class="popup-sub">${isCombo ? "KOMBINATIONSUNLÅST!" : "Nytt magiskt ord!"}</div>
+    `;
+
+    triggerOverlay.style.display = "flex";
+
+    if (isCombo) {
+        launchSideConfetti();
+    } else {
+        confetti({ particleCount: 150, spread: 100, origin: { y: 0.5 } });
+    }
+
+    setTimeout(() => {
+        triggerOverlay.style.display = "none";
+    }, 3000);
+}
+
+function launchSideConfetti() {
+    const end = Date.now() + 3000;
+
+    const interval = setInterval(() => {
+        if (Date.now() > end) {
+            clearInterval(interval);
+            return;
+        }
+        confetti({ particleCount: 60, angle: 60,  spread: 60, origin: { x: 0 } });
+        confetti({ particleCount: 60, angle: 120, spread: 60, origin: { x: 1 } });
+    }, 200);
+}
+
+function escapeHtml(str) {
+    return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+}

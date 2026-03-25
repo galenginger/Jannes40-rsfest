@@ -1,0 +1,30 @@
+{
+  "password": "janne40",
+  "words": [
+    { "word": "grattis", "emoji": "🎉" },
+    { "word": "40", "emoji": "🎂" },
+    { "word": "legend", "emoji": "🏆" },
+    { "word": "kärlek", "emoji": "❤️" },
+    { "word": "skål", "emoji": "🥂" },
+    { "word": "fest", "emoji": "🪩" },
+    { "word": "janne", "emoji": "🎸" },
+    { "word": "Stjärna", "emoji": "⭐" }
+  ],
+  "combos": [
+    {
+      "words": [ "grattis", "janne" ],
+      "emoji": "🥳",
+      "description": "Grattis + Janne"
+    },
+    {
+      "words": [ "kärlek", "40" ],
+      "emoji": "💖",
+      "description": "Kärlek & 40"
+    },
+    {
+      "words": [ "skål", "legend" ],
+      "emoji": "👑",
+      "description": "Skål för legenden"
+    }
+  ]
+}

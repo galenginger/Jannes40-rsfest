@@ -1,0 +1,41 @@
+@page
+@model IndexModel
+@{
+    ViewData["Title"] = "Janne fyller 40!";
+    Layout = "_Layout";
+}
+
+<div class="login-page">
+    <div class="login-card">
+        <div class="login-logo">🎂</div>
+        <h1>Janne fyller 40!</h1>
+        <p class="login-subtitle">Välkommen till festen — skriv lösenordet för att komma in.</p>
+
+        @if (Model.ErrorMessage != null)
+        {
+            <div class="error-box">@Model.ErrorMessage</div>
+        }
+
+        <form method="post">
+            <div class="form-group">
+                <label for="password">Lösenord</label>
+                <input type="password" id="password" name="Password" class="form-input"
+                       placeholder="Skriv lösenordet här..." autocomplete="off" required />
+            </div>
+
+            <div class="form-group">
+                <label for="username">
+                    Ditt namn <span class="optional">(valfritt)</span>
+                </label>
+                <input type="text" id="username" name="Username" class="form-input"
+                       placeholder="Vad heter du?" maxlength="50"
+                       value="@Model.SavedName" autocomplete="off" />
+                <small class="hint">
+                    Lämnar du namnfältet tomt visas sidan i projektor-läge (bara meddelandeflödet).
+                </small>
+            </div>
+
+            <button type="submit" class="btn-primary">Kom in! 🎉</button>
+        </form>
+    </div>
+</div>

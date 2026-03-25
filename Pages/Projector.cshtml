@@ -1,0 +1,51 @@
+@page
+@model ProjectorModel
+@{
+    ViewData["Title"] = "Janne fyller 40 — Projektor";
+    Layout = "_Layout";
+}
+
+@section Styles {
+<style>
+    body { overflow: hidden; background: #0a0a1a; }
+</style>
+}
+
+<div class="projector-page">
+
+    @* Titelrad *@
+    <div class="projector-header">
+        <span>🎂 Janne fyller 40! 🎂</span>
+    </div>
+
+    @* Räknare i projektor-läge *@
+    <div class="projector-counters">
+        <div class="proj-counter">
+            <span class="proj-counter-icon">✨</span>
+            <span>Magiska ord: <strong><span id="proj-words">@Model.UnlockedWords</span>/@Model.TotalWords</strong></span>
+        </div>
+        <div class="proj-counter">
+            <span class="proj-counter-icon">🔥</span>
+            <span>Kombos: <strong><span id="proj-combos">@Model.UnlockedCombos</span>/@Model.TotalCombos</strong></span>
+        </div>
+    </div>
+
+    @* Meddelandeflöde — stora meddelanden som scrollar uppåt *@
+    <div class="projector-feed" id="projector-feed">
+        <div id="projector-messages"></div>
+    </div>
+
+    @* Triggeranimations-overlay *@
+    <div id="trigger-overlay" class="trigger-overlay" style="display:none">
+        <div id="trigger-popup" class="trigger-popup projector-popup"></div>
+    </div>
+
+</div>
+
+@section Scripts {
+<script>
+    const TRIGGER_WORDS  = @Html.Raw(Model.WordsJson);
+    const UNLOCKED_WORDS = new Set(@Html.Raw(Model.UnlockedWordSetJson));
+</script>
+<script src="~/js/projector.js" asp-append-version="true"></script>
+}

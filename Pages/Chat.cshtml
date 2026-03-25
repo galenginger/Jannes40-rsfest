@@ -1,0 +1,121 @@
+@page
+@model ChatModel
+@{
+    ViewData["Title"] = "Janne fyller 40!";
+    Layout = "_Layout";
+}
+
+<div class="chat-app">
+
+    @* ===== SIDOPANEL — upplåsta ord och kombos ===== *@
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <span>🗝️ Upplåsta ord</span>
+            <button class="sidebar-toggle" id="sidebar-toggle" title="Stäng/öppna">✕</button>
+        </div>
+
+        <div class="sidebar-section">
+            <div class="sidebar-section-title">
+                Enskilda ord
+                <span class="sidebar-count">
+                    <span id="sb-words">@Model.UnlockedWords</span>/@Model.TotalWords
+                </span>
+            </div>
+            <ul class="sidebar-list" id="sidebar-words">
+                @* Fylls av JS *@
+            </ul>
+        </div>
+
+        @if (Model.TotalCombos > 0)
+        {
+            <div class="sidebar-section">
+                <div class="sidebar-section-title">
+                    Kombinationer
+                    <span class="sidebar-count">
+                        <span id="sb-combos">@Model.UnlockedCombos</span>/@Model.TotalCombos
+                    </span>
+                </div>
+                <ul class="sidebar-list" id="sidebar-combos">
+                    @* Fylls av JS *@
+                </ul>
+            </div>
+        }
+    </aside>
+
+    @* ===== HUVUDINNEHÅLL ===== *@
+    <div class="chat-main">
+
+        <header class="chat-header">
+            <div class="chat-header-left">
+                <button class="sidebar-open-btn" id="sidebar-open-btn" title="Visa upplåsta ord">🗝️</button>
+                <span class="chat-logo">🎂</span>
+                <span class="chat-title">Janne fyller 40!</span>
+            </div>
+            <div class="chat-header-right">
+                <span class="chat-username">Inloggad som <strong>@Model.Username</strong></span>
+                <form method="post" asp-page-handler="Logout" style="display:inline">
+                    <button type="submit" class="btn-logout">Logga ut</button>
+                </form>
+            </div>
+        </header>
+
+        @* Räknare *@
+        <div class="counters-bar">
+            <div class="counter-card" id="word-counter">
+                <div class="counter-icon">✨</div>
+                <div class="counter-info">
+                    <div class="counter-label">Magiska ord</div>
+                    <div class="counter-value">
+                        <span id="unlocked-words">@Model.UnlockedWords</span>/<span>@Model.TotalWords</span>
+                    </div>
+                </div>
+            </div>
+            <div class="counter-card" id="combo-counter">
+                <div class="counter-icon">🔥</div>
+                <div class="counter-info">
+                    <div class="counter-label">Kombos</div>
+                    <div class="counter-value">
+                        <span id="unlocked-combos">@Model.UnlockedCombos</span>/<span>@Model.TotalCombos</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        @* Meddelandeflöde *@
+        <div class="messages-container" id="messages">
+            <div class="messages-inner" id="messages-inner">
+                <div class="welcome-message">
+                    Välkommen @Model.Username! Skriv något trevligt till Janne 🎉
+                </div>
+            </div>
+        </div>
+
+        @* Inmatning *@
+        <div class="input-area">
+            <input type="text" id="message-input" class="message-input"
+                   placeholder="Skriv ett meddelande..." maxlength="500"
+                   autocomplete="off" />
+            <button id="send-btn" class="btn-send">Skicka</button>
+        </div>
+
+    </div>
+
+    @* Trigger-overlay *@
+    <div id="trigger-overlay" class="trigger-overlay" style="display:none">
+        <div id="trigger-popup" class="trigger-popup"></div>
+    </div>
+
+</div>
+
+@section Scripts {
+<script>
+    const MY_NAME = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Username));
+
+    // Hela trigger-konfigurationen och aktuell upplåst state — renderas server-side
+    const TRIGGER_WORDS  = @Html.Raw(Model.WordsJson);
+    const TRIGGER_COMBOS = @Html.Raw(Model.CombosJson);
+    const UNLOCKED_WORDS = new Set(@Html.Raw(Model.UnlockedWordSetJson));
+    const UNLOCKED_COMBOS = new Set(@Html.Raw(Model.UnlockedComboSetJson));
+</script>
+<script src="~/js/chat.js" asp-append-version="true"></script>
+}
