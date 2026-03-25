@@ -488,6 +488,23 @@ html, body {
     box-shadow: 0 0 0 1px rgba(232, 67, 147, 0.25), inset 0 0 12px rgba(232, 67, 147, 0.06);
 }
 
+/* ===== Highlighted-meddelanden (synliga för alla) ===== */
+.message.highlighted .message-bubble {
+    background: rgba(247, 183, 49, 0.1);
+    border-color: var(--accent);
+    box-shadow: 0 0 0 1px rgba(247, 183, 49, 0.35), 0 2px 14px rgba(247, 183, 49, 0.18);
+    font-size: 1.18rem;
+}
+
+.message.highlighted .message-meta::before {
+    content: "📢 ";
+}
+
+.message.highlighted .message-meta {
+    color: var(--accent);
+    font-weight: 700;
+}
+
 /* ===== Inmatningsrad ===== */
 .input-area {
     display: flex;
@@ -619,6 +636,22 @@ html, body {
     border-radius: 0 8px 8px 0;
     padding: 0.35rem 0.6rem;
     animation: fadein 0.3s ease;
+}
+
+.proj-message.highlighted {
+    background: rgba(247, 183, 49, 0.12);
+    border-left: 5px solid var(--accent);
+    box-shadow: 0 0 0 1px rgba(247, 183, 49, 0.3), 0 2px 12px rgba(247, 183, 49, 0.15);
+}
+
+.proj-message.highlighted .proj-message-name::before {
+    content: "📢 ";
+}
+
+.proj-message.highlighted .proj-message-text {
+    color: #fff;
+    font-weight: 600;
+    font-size: clamp(1rem, 1.8vw, 1.3rem);
 }
 
 @keyframes slideup {

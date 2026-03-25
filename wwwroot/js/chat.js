@@ -94,8 +94,8 @@ const connection = new signalR.HubConnectionBuilder()
     .withAutomaticReconnect()
     .build();
 
-connection.on("ReceiveMessage", (username, text, triggers) => {
-    addMessage(username, text);
+connection.on("ReceiveMessage", (username, text, isHighlighted, triggers) => {
+    addMessage(username, text, isHighlighted);
 
     if (triggers.totalUnlockedWords !== undefined) {
         updateCounters(triggers.totalUnlockedWords, triggers.totalUnlockedCombos);
@@ -164,11 +164,11 @@ function sendMessage() {
 
 // ===== Hjälpfunktioner =====
 
-function addMessage(username, text) {
+function addMessage(username, text, isHighlighted) {
     const isOwn = username === MY_NAME;
 
     const wrapper = document.createElement("div");
-    wrapper.className = "message" + (isOwn ? " own" : "");
+    wrapper.className = "message" + (isOwn ? " own" : "") + (isHighlighted ? " highlighted" : "");
 
     const avatar = document.createElement("div");
     avatar.className = "message-avatar";

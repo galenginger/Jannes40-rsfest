@@ -76,9 +76,11 @@ public class ChatHub : Hub
 
         // Kontrollera triggers och uppdatera global status
         var triggerResult = _triggerService.CheckMessage(text);
+        var isHighlighted = _triggerService.IsHighlightedUser(username);
 
         // Skicka meddelandet + triggerinformation till ALLA anslutna klienter
-        await Clients.All.SendAsync("ReceiveMessage", username, text, new
+        // isHighlighted = true innebär att meddelandet syns highlightat för alla
+        await Clients.All.SendAsync("ReceiveMessage", username, text, isHighlighted, new
         {
             newWords = triggerResult.NewlyUnlockedWords.Select(w => new { w.Word, w.Emoji }).ToList(),
             newCombos = triggerResult.NewlyUnlockedCombos.Select(c => new { c.Description, c.Emoji }).ToList(),

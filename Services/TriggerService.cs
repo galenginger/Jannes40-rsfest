@@ -52,6 +52,11 @@ public class TriggerService
     public string GetPassword() => _config.Password;
     public IReadOnlyList<TriggerWord> GetAllWords() => _config.Words.AsReadOnly();
     public IReadOnlyList<TriggerCombo> GetAllCombos() => _config.Combos.AsReadOnly();
+
+    // Returnerar true om användarnamnet finns i highlightedUsers (case-insensitivt)
+    public bool IsHighlightedUser(string username) =>
+        _config.HighlightedUsers.Any(u =>
+            string.Equals(u, username, StringComparison.OrdinalIgnoreCase));
     public int TotalWordCount => _config.Words.Count;
     public int TotalComboCount => _config.Combos.Count;
 

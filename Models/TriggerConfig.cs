@@ -24,6 +24,8 @@ public class TriggerCombo
 public class TriggerConfig
 {
     public string Password { get; set; } = string.Empty;
+    // Användare vars meddelanden highlightas för ALLA (t.ex. värden/jubilaren)
+    public List<string> HighlightedUsers { get; set; } = new();
     public List<TriggerWord> Words { get; set; } = new();
     public List<TriggerCombo> Combos { get; set; } = new();
 }

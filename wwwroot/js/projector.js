@@ -15,8 +15,8 @@ const connection = new signalR.HubConnectionBuilder()
     .withAutomaticReconnect()
     .build();
 
-connection.on("ReceiveMessage", (username, text, triggers) => {
-    addProjMessage(username, text);
+connection.on("ReceiveMessage", (username, text, isHighlighted, triggers) => {
+    addProjMessage(username, text, isHighlighted);
 
     if (triggers.totalUnlockedWords !== undefined) {
         projWordsEl.textContent  = triggers.totalUnlockedWords;
@@ -56,9 +56,9 @@ connection.on("UpdateCounters", (state) => {
 connection.start().catch(err => console.error("SignalR-anslutning misslyckades:", err));
 
 // Lägger till ett nytt meddelande i projektor-vyn och tar bort gamla om det blir för många
-function addProjMessage(username, text) {
+function addProjMessage(username, text, isHighlighted) {
     const msg = document.createElement("div");
-    msg.className = "proj-message";
+    msg.className = "proj-message" + (isHighlighted ? " highlighted" : "");
 
     const header = document.createElement("div");
     header.className = "proj-message-header";
