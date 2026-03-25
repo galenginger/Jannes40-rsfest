@@ -6,6 +6,8 @@ const messagesInner    = document.getElementById("messages-inner");
 const messagesContainer = document.getElementById("messages");
 const messageInput     = document.getElementById("message-input");
 const sendBtn          = document.getElementById("send-btn");
+const emojiBtn         = document.getElementById("emoji-btn");
+const emojiPicker      = document.getElementById("emoji-picker");
 const unlockedWordsEl  = document.getElementById("unlocked-words");
 const unlockedCombosEl = document.getElementById("unlocked-combos");
 const triggerOverlay   = document.getElementById("trigger-overlay");
@@ -154,9 +156,32 @@ messageInput.addEventListener("keydown", e => {
     }
 });
 
+// Emotikon/shortcode → emoji-konvertering (körs före sändning)
+const EMOTICON_MAP = [
+    // Ordning spelar roll — längre/specifika mönster först
+    [/:'-\)/g,  "🥹"], [/:'-\(/g,  "😢"],
+    [/:-?\)/g,  "😊"], [/:-?\(/g,  "😢"],
+    [/:-?D/g,   "😄"], [/:-?P/g,   "😛"],
+    [/;-?\)/g,  "😉"], [/:-?\*/g,  "😘"],
+    [/:-?O/gi,  "😮"], [/>:-?\(/g, "😠"],
+    [/\bXD\b/gi,"😂"], [/\bx3\b/gi,"🥰"],
+    [/<3/g,     "❤️"], [/\b:\|/g,  "😐"],
+    [/\^_\^/g,  "😊"], [/\^-\^/g,  "😊"],
+    [/o\/o/gi,  "🙌"], [/\\o\//g,  "🙌"],
+];
+
+function applyEmoticons(text) {
+    let result = text;
+    for (const [pattern, emoji] of EMOTICON_MAP) {
+        result = result.replace(pattern, emoji);
+    }
+    return result;
+}
+
 function sendMessage() {
-    const text = messageInput.value.trim();
-    if (!text) return;
+    const raw = messageInput.value.trim();
+    if (!raw) return;
+    const text = applyEmoticons(raw);
     connection.invoke("SendMessage", text).catch(err => console.error(err));
     messageInput.value = "";
     messageInput.focus();
@@ -188,8 +213,13 @@ function addMessage(username, text, isHighlighted) {
     bubble.className = "message-bubble";
     bubble.textContent = text; // textContent skyddar mot XSS
 
+    const time = document.createElement("span");
+    time.className = "message-time";
+    time.textContent = formatTime(new Date());
+
     body.appendChild(meta);
     body.appendChild(bubble);
+    body.appendChild(time);
     wrapper.appendChild(avatar);
     wrapper.appendChild(body);
     messagesInner.appendChild(wrapper);
@@ -247,3 +277,60 @@ function escapeHtml(str) {
         .replace(/>/g, "&gt;")
         .replace(/"/g, "&quot;");
 }
+
+function formatTime(date) {
+    return date.toLocaleTimeString("sv-SE", { hour: "2-digit", minute: "2-digit" });
+}
+
+// ===== Emoji-picker =====
+
+const EMOJIS = [
+    "🎉","🎂","🥳","🎊","🎈","🎁","🎀","🪩","🎸","🏆",
+    "❤️","💖","💗","❤️‍🔥","💕","🥂","🍾","🍻","🥰","😍",
+    "😂","🤣","😊","😄","😃","😎","🤩","🥹","😘","🤗",
+    "👏","🙌","✨","💫","🔥","💯","⭐","🌟","📢","👑",
+    "😋","😏","😜","🤪","😝","🫶","🤝","👋","🕺","💃",
+    "🍕","🎵","🎶","🎯","🌈","🦄","🐣","🍀","☀️","🌙",
+];
+
+// Segmenter för korrekt hantering av multi-codepoint emojis (t.ex. ❤️‍🔥)
+const segmenter = typeof Intl !== "undefined" && Intl.Segmenter
+    ? new Intl.Segmenter()
+    : null;
+
+function graphemeLength(str) {
+    if (segmenter) return [...segmenter.segment(str)].length;
+    return [...str].length; // spread hanterar surrogatpar
+}
+
+(function buildEmojiPicker() {
+    EMOJIS.forEach(emoji => {
+        const btn = document.createElement("button");
+        btn.className = "emoji-item";
+        btn.textContent = emoji;
+        btn.type = "button";
+        btn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            const pos = messageInput.selectionStart ?? messageInput.value.length;
+            const val = messageInput.value;
+            messageInput.value = val.slice(0, pos) + emoji + val.slice(pos);
+            // Sätt cursor efter infogad emoji (UTF-16 code unit-längd)
+            const newPos = pos + emoji.length;
+            messageInput.setSelectionRange(newPos, newPos);
+            messageInput.focus();
+            emojiPicker.classList.remove("open");
+        });
+        emojiPicker.appendChild(btn);
+    });
+})();
+
+emojiBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    emojiPicker.classList.toggle("open");
+});
+
+document.addEventListener("click", () => {
+    emojiPicker.classList.remove("open");
+});
+
+emojiPicker.addEventListener("click", (e) => e.stopPropagation());

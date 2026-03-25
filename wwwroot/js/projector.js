@@ -74,8 +74,13 @@ function addProjMessage(username, text, isHighlighted) {
     nameEl.className = "proj-message-name";
     nameEl.textContent = username;
 
+    const timeEl = document.createElement("span");
+    timeEl.className = "proj-message-time";
+    timeEl.textContent = new Date().toLocaleTimeString("sv-SE", { hour: "2-digit", minute: "2-digit" });
+
     header.appendChild(avatarEl);
     header.appendChild(nameEl);
+    header.appendChild(timeEl);
 
     const textEl = document.createElement("div");
     textEl.className = "proj-message-text";
