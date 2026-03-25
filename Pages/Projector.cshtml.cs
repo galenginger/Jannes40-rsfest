@@ -5,9 +5,6 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 
 namespace JanneFest.Pages;
 
-// Projektor-vy för att visa meddelandeflödet på stor skärm under festen.
-// Kräver att lösenordet angetts men inget användarnamn.
-// Kan INTE skicka meddelanden — bara ta emot och visa.
 public class ProjectorModel : PageModel
 {
     private readonly TriggerService _triggerService;
@@ -17,7 +14,6 @@ public class ProjectorModel : PageModel
     public int UnlockedWords { get; private set; }
     public int UnlockedCombos { get; private set; }
 
-    // Trigger-konfiguration som JSON — skickas till projector.js för mini-konfetti
     public string WordsJson { get; private set; } = "[]";
     public string UnlockedWordSetJson { get; private set; } = "[]";
 
@@ -28,7 +24,6 @@ public class ProjectorModel : PageModel
 
     public IActionResult OnGet()
     {
-        // Kräver minst lösenordsautentisering
         if (HttpContext.Session.GetString("authenticated") != "true")
             return RedirectToPage("/Index");
 

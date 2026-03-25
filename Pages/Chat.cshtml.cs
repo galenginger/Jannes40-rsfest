@@ -6,9 +6,6 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 
 namespace JanneFest.Pages;
 
-// Chattsida för inloggade användare med namn.
-// Visar real-time meddelandeflöde, sidopanel med trigger-progress och textinmatning.
-// Omdirigerar till inloggning om sessionen saknar namn.
 public class ChatModel : PageModel
 {
     private readonly TriggerService _triggerService;
@@ -19,11 +16,8 @@ public class ChatModel : PageModel
     public int UnlockedWords { get; private set; }
     public int UnlockedCombos { get; private set; }
 
-    // Hela trigger-konfigurationen som JSON — skickas till JS för sidopanelen
     public string WordsJson { get; private set; } = "[]";
     public string CombosJson { get; private set; } = "[]";
-
-    // Vilka ord/kombos är redan upplåsta vid sidladdning
     public string UnlockedWordSetJson { get; private set; } = "[]";
     public string UnlockedComboSetJson { get; private set; } = "[]";
 
@@ -44,7 +38,6 @@ public class ChatModel : PageModel
         UnlockedWords = _triggerService.UnlockedWordCount;
         UnlockedCombos = _triggerService.UnlockedComboCount;
 
-        // Serialisera konfiguration och aktuellt state för JS-sidopanelen
         var opts = new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
 
         WordsJson = JsonSerializer.Serialize(
@@ -68,7 +61,6 @@ public class ChatModel : PageModel
         return Page();
     }
 
-    // Loggar ut och rensar sessionen -> tillbaka till inloggningssidan
     public IActionResult OnPostLogout()
     {
         HttpContext.Session.Clear();

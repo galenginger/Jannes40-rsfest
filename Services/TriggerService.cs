@@ -3,19 +3,14 @@ using JanneFest.Models;
 
 namespace JanneFest.Services;
 
-// Singleton-tjänst som håller global triggerords-status för alla användare.
-// Trådsäker via _lock — kan hantera 50+ samtida SignalR-anslutningar.
-// Konfigurationen laddas från triggerwords.json vid appstart.
+// Singleton — trådsäker via _lock.
 public class TriggerService
 {
     private readonly IWebHostEnvironment _env;
     private TriggerConfig _config = new();
     private readonly object _lock = new();
 
-    // Upplåsta enskilda ord (lowercase). HashSet.Add returnerar false om redan upplåst.
     private readonly HashSet<string> _unlockedWords = new(StringComparer.OrdinalIgnoreCase);
-
-    // Upplåsta kombinationer. Nyckel = ordens lowercase sorterade och sammanfogade med "+".
     private readonly HashSet<string> _unlockedCombos = new();
 
     public TriggerService(IWebHostEnvironment env)
@@ -23,8 +18,6 @@ public class TriggerService
         _env = env;
     }
 
-    // Läser triggerwords.json. Anropas en gång i Program.cs vid appstart.
-    // passwordOverride: om angett via kommandorad, ersätter lösenordet i triggerwords.json.
     public void Initialize(string? passwordOverride = null)
     {
         var path = Path.Combine(_env.ContentRootPath, "triggerwords.json");
@@ -53,10 +46,10 @@ public class TriggerService
     public IReadOnlyList<TriggerWord> GetAllWords() => _config.Words.AsReadOnly();
     public IReadOnlyList<TriggerCombo> GetAllCombos() => _config.Combos.AsReadOnly();
 
-    // Returnerar true om användarnamnet finns i highlightedUsers (case-insensitivt)
     public bool IsHighlightedUser(string username) =>
         _config.HighlightedUsers.Any(u =>
             string.Equals(u, username, StringComparison.OrdinalIgnoreCase));
+
     public int TotalWordCount => _config.Words.Count;
     public int TotalComboCount => _config.Combos.Count;
 
@@ -70,24 +63,16 @@ public class TriggerService
         get { lock (_lock) { return _unlockedCombos.Count; } }
     }
 
-    // Returnerar de ord (lowercase) som hittills låsts upp — används för att rita sidopanelen
     public HashSet<string> GetUnlockedWordSet()
     {
         lock (_lock) { return new HashSet<string>(_unlockedWords, StringComparer.OrdinalIgnoreCase); }
     }
 
-    // Returnerar de combo-nycklar som hittills låsts upp
     public HashSet<string> GetUnlockedComboSet()
     {
         lock (_lock) { return new HashSet<string>(_unlockedCombos); }
     }
 
-    // Analyserar ett meddelande efter triggerord och kombinationer.
-    //
-    // Regler:
-    //   Enskilda ord: case-insensitiv matchning, låses upp globalt första gången.
-    //   Kombinationer: ALLA ord måste finnas i SAMMA meddelande — detta är
-    //   "på skärmen samtidigt"-kravet som gör att man inte kan fuska.
     public TriggerResult CheckMessage(string messageText)
     {
         if (string.IsNullOrWhiteSpace(messageText))
@@ -98,7 +83,6 @@ public class TriggerService
 
         lock (_lock)
         {
-            // Kontrollera enskilda ord
             foreach (var triggerWord in _config.Words)
             {
                 if (lowerMessage.Contains(triggerWord.Word.ToLowerInvariant())
@@ -108,7 +92,6 @@ public class TriggerService
                 }
             }
 
-            // Kontrollera kombinationer — alla ord krävs i DETTA meddelande
             foreach (var combo in _config.Combos)
             {
                 var comboKey = string.Join("+", combo.Words
