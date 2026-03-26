@@ -12,7 +12,7 @@ const triggerPopup = document.getElementById("trigger-popup");
 const MAX_MESSAGES = 30;
 
 const connection = new signalR.HubConnectionBuilder()
-    .withUrl("/chathub")
+    .withUrl(SIGNALR_URL)
     .withAutomaticReconnect()
     .build();
 

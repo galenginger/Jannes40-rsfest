@@ -19,6 +19,11 @@
     @* Deterministisk avatar-generator — delas av chatt och projektor *@
     <script src="~/js/avatar.js" asp-append-version="true"></script>
 
+    <script>
+        const SIGNALR_URL   = '@Url.Content("~/chathub")';
+        const FACE_IMAGE_URL = '@Url.Content("~/images/face.png")';
+    </script>
+
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

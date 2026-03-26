@@ -133,7 +133,7 @@ buildHeaderWords();
 // ===== SignalR =====
 
 const connection = new signalR.HubConnectionBuilder()
-    .withUrl("/chathub")
+    .withUrl(SIGNALR_URL)
     .withAutomaticReconnect()
     .build();
 

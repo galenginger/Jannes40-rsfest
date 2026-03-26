@@ -45,6 +45,7 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 
+app.UsePathBase("/danne");
 app.UseStaticFiles();
 app.UseRouting();
 app.UseSession();
