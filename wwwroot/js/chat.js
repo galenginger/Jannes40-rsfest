@@ -6,6 +6,18 @@ const messagesInner    = document.getElementById("messages-inner");
 const messagesContainer = document.getElementById("messages");
 const messageInput     = document.getElementById("message-input");
 const sendBtn          = document.getElementById("send-btn");
+const charCounter      = document.getElementById("char-counter");
+const MAX_LENGTH       = 256;
+
+function updateCharCounter() {
+    const remaining = MAX_LENGTH - messageInput.value.length;
+    charCounter.textContent = remaining;
+    charCounter.className = remaining <= 20 ? "char-counter danger"
+                          : remaining <= 50 ? "char-counter warning"
+                          : "char-counter";
+}
+
+messageInput.addEventListener("input", updateCharCounter);
 const emojiBtn         = document.getElementById("emoji-btn");
 const emojiPicker      = document.getElementById("emoji-picker");
 const unlockedWordsEl  = document.getElementById("unlocked-words");
@@ -184,6 +196,7 @@ function sendMessage() {
     const text = applyEmoticons(raw);
     connection.invoke("SendMessage", text).catch(err => console.error(err));
     messageInput.value = "";
+    updateCharCounter();
     messageInput.focus();
 }
 
@@ -317,6 +330,7 @@ function graphemeLength(str) {
             // Sätt cursor efter infogad emoji (UTF-16 code unit-längd)
             const newPos = pos + emoji.length;
             messageInput.setSelectionRange(newPos, newPos);
+            messageInput.dispatchEvent(new Event("input"));
             messageInput.focus();
             emojiPicker.classList.remove("open");
         });

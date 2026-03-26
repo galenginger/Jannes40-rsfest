@@ -573,9 +573,14 @@ html, body {
     position: relative; /* Behövs för emoji-picker absolute-positionering */
 }
 
-.message-input {
+.input-wrapper {
+    position: relative;
     flex: 1;
-    padding: 0.75rem 1rem;
+}
+
+.message-input {
+    width: 100%;
+    padding: 0.75rem 3rem 0.75rem 1rem;
     background: var(--bg-input);
     border: 1px solid var(--border);
     border-radius: 8px;
@@ -583,9 +588,23 @@ html, body {
     font-size: 1rem;
     outline: none;
     transition: border-color 0.2s;
+    box-sizing: border-box;
 }
 
 .message-input:focus { border-color: var(--accent); }
+
+.char-counter {
+    position: absolute;
+    right: 0.6rem;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 1.4rem;
+    color: #888;
+    pointer-events: none;
+    transition: color 0.2s;
+}
+.char-counter.warning { color: #f0a500; }
+.char-counter.danger  { color: #e53935; font-weight: 600; }
 
 /* ===== Trigger-overlay (konfetti-popup) ===== */
 .trigger-overlay {

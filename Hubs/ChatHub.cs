@@ -52,7 +52,7 @@ public class ChatHub : Hub
         }
 
         text = text.Trim();
-        if (string.IsNullOrWhiteSpace(text) || text.Length > 500) return;
+        if (string.IsNullOrWhiteSpace(text) || text.Length > 256) return;
 
         var triggerResult = _triggerService.CheckMessage(text);
         var isHighlighted = _triggerService.IsHighlightedUser(username);
