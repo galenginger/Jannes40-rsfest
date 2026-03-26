@@ -40,7 +40,10 @@ public class ChatHub : Hub
         await BroadcastParticipantCount();
 
         if (_connectionUsers.TryGetValue(Context.ConnectionId, out var joinedUser) && !string.IsNullOrEmpty(joinedUser))
-            await Clients.Others.SendAsync("UserJoined", joinedUser);
+        {
+            if (_announcedUsers.TryAdd(joinedUser, true))
+                await Clients.Others.SendAsync("UserJoined", joinedUser);
+        }
 
         await base.OnConnectedAsync();
     }
