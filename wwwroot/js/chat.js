@@ -150,6 +150,10 @@ connection.on("UpdateCounters", (state) => {
     updateCounters(state.unlockedWords, state.unlockedCombos);
 });
 
+connection.on("UpdateParticipants", (count) => {
+    document.getElementById("participant-count").textContent = count;
+});
+
 connection.start()
     .then(() => {
         sendBtn.disabled = false;

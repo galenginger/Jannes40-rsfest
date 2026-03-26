@@ -378,6 +378,7 @@ html, body {
     background: var(--bg-card);
     border-bottom: 1px solid var(--border);
     flex-shrink: 0;
+    position: relative;
 }
 
 .chat-header-left {
@@ -405,6 +406,16 @@ html, body {
 .chat-username {
     font-size: 0.9rem;
     color: var(--text-muted);
+}
+
+.participant-count {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    white-space: nowrap;
+    pointer-events: none;
 }
 
 /* ===== Räknare ===== */

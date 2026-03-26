@@ -34,13 +34,21 @@ public class ChatHub : Hub
             totalCombos = _triggerService.TotalComboCount
         });
 
+        await BroadcastParticipantCount();
         await base.OnConnectedAsync();
     }
 
     public override async Task OnDisconnectedAsync(Exception? exception)
     {
         _connectionUsers.TryRemove(Context.ConnectionId, out _);
+        await BroadcastParticipantCount();
         await base.OnDisconnectedAsync(exception);
+    }
+
+    private Task BroadcastParticipantCount()
+    {
+        var count = _connectionUsers.Values.Count(u => !string.IsNullOrEmpty(u));
+        return Clients.All.SendAsync("UpdateParticipants", count);
     }
 
     public async Task SendMessage(string text)
