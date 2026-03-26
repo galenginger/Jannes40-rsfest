@@ -25,6 +25,15 @@ builder.Services.AddSignalR(options =>
     options.EnableDetailedErrors = builder.Environment.IsDevelopment();
 });
 
+builder.Services.Configure<ForwardedHeadersOptions>(options =>
+{
+    options.ForwardedHeaders =
+        ForwardedHeaders.XForwardedFor |
+        ForwardedHeaders.XForwardedProto;
+
+    options.KnownProxies.Add(System.Net.IPAddress.Parse("127.0.0.1"));
+});
+
 builder.Services.AddDistributedMemoryCache();
 builder.Services.AddSession(options =>
 {
@@ -39,9 +48,10 @@ builder.Services.AddSingleton<TriggerService>();
 
 var app = builder.Build();
 
+app.UseForwardedHeaders();
+
 app.UsePathBase("/danne"); //Eftersom siten servas under suvnet.se/danne
 
-app.UseHttpsRedirection();
 
 if (!app.Environment.IsDevelopment())
 {
@@ -49,6 +59,7 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 
+app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseRouting();
 app.UseSession();
