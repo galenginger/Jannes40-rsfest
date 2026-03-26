@@ -48,15 +48,21 @@ html, body {
 }
 
 .login-logo {
-    font-size: 4rem;
     margin-bottom: 0.5rem;
     display: block;
     animation: bounce 2s infinite;
 }
 
+.login-face {
+    width: 120px;
+    height: 120px;
+    object-fit: cover;
+    border-radius: 50%;
+}
+
 @keyframes bounce {
-    0%, 100% { transform: translateY(0); }
-    50%       { transform: translateY(-8px); }
+    0%, 100% { transform: rotate(-12deg); }
+    50%       { transform: rotate(12deg); }
 }
 
 .login-card h1 {

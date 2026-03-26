@@ -21,4 +21,4 @@ backgrundsfärg och kursiv icke-fet text i stil med "Är med på festen!")
 chatvyn.
 I projektorvyn kanske det funkar som det är
 
-[ ] På inloggningssidan där tårtan är ska det gå att ha en bild istället (På Daniel), gärna fortfarande gungande
+[x] På inloggningssidan där tårtan är ska det gå att ha en bild istället (På Daniel), gärna fortfarande gungande
