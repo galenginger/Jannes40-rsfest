@@ -50,12 +50,8 @@
                 <button class="sidebar-open-btn" id="sidebar-open-btn" title="Visa upplåsta ord">🗝️</button>
                 <span class="chat-logo">🎂</span>
                 <span class="chat-title">Danne fyller 40!</span>
-                <div id="header-unlocked-words" class="header-unlocked-words"></div>
-                <span class="header-counter" id="word-counter">✨ <span id="unlocked-words">@Model.UnlockedWords</span>/<span>@Model.TotalWords</span></span>
-                <span class="header-counter" id="combo-counter">🔥 <span id="unlocked-combos">@Model.UnlockedCombos</span>/<span>@Model.TotalCombos</span></span>
             </div>
             <div class="chat-header-right">
-                <span class="participant-count">Deltagare: <strong id="participant-count">–</strong></span>
                 <span class="chat-username">Inloggad som <strong>@Model.Username</strong></span>
                 <form method="post" asp-page-handler="Logout" style="display:inline">
                     <button type="submit" class="btn-logout">Logga ut</button>
@@ -75,14 +71,12 @@
 
         @* Inmatning *@
         <div class="input-area">
-            <div id="emoji-picker" class="emoji-picker"></div>
             <div class="input-wrapper">
                 <input type="text" id="message-input" class="message-input"
                        placeholder="Skriv ett meddelande..." maxlength="256"
                        autocomplete="off" />
                 <span id="char-counter" class="char-counter"></span>
             </div>
-            <button id="emoji-btn" class="btn-emoji" type="button" title="Välj emoji">😊</button>
             <button id="send-btn" class="btn-send">Skicka</button>
         </div>
 
