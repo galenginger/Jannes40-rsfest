@@ -54,8 +54,8 @@
                 <span class="header-counter" id="word-counter">✨ <span id="unlocked-words">@Model.UnlockedWords</span>/<span>@Model.TotalWords</span></span>
                 <span class="header-counter" id="combo-counter">🔥 <span id="unlocked-combos">@Model.UnlockedCombos</span>/<span>@Model.TotalCombos</span></span>
             </div>
-            <span class="participant-count">Deltagare: <strong id="participant-count">–</strong></span>
             <div class="chat-header-right">
+                <span class="participant-count">Deltagare: <strong id="participant-count">–</strong></span>
                 <span class="chat-username">Inloggad som <strong>@Model.Username</strong></span>
                 <form method="post" asp-page-handler="Logout" style="display:inline">
                     <button type="submit" class="btn-logout">Logga ut</button>
