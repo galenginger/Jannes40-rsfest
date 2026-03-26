@@ -429,7 +429,6 @@ function graphemeLength(str) {
             messageInput.setSelectionRange(newPos, newPos);
             messageInput.dispatchEvent(new Event("input"));
             messageInput.focus();
-            emojiPicker.classList.remove("open");
         });
         emojiPicker.appendChild(btn);
     });
