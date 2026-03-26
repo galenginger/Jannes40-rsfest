@@ -11,6 +11,11 @@ const MAX_LENGTH       = 256;
 
 function updateCharCounter() {
     const remaining = MAX_LENGTH - messageInput.value.length;
+    if (remaining > 56) {
+        charCounter.textContent = "";
+        charCounter.className = "char-counter";
+        return;
+    }
     charCounter.textContent = remaining;
     charCounter.className = remaining <= 20 ? "char-counter danger"
                           : remaining <= 50 ? "char-counter warning"
