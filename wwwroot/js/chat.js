@@ -233,7 +233,7 @@ function addMessage(username, text, isHighlighted) {
 
     const bubble = document.createElement("div");
     bubble.className = "message-bubble";
-    bubble.textContent = text; // textContent skyddar mot XSS
+    applyWordHighlights(bubble, text);
 
     const time = document.createElement("span");
     time.className = "message-time";
@@ -290,6 +290,23 @@ function launchSideConfetti() {
         confetti({ particleCount: 40, angle: 60,  spread: 55, origin: { x: 0 } });
         confetti({ particleCount: 40, angle: 120, spread: 55, origin: { x: 1 } });
     }, 200);
+}
+
+function applyWordHighlights(container, text) {
+    const wordSet = new Set(TRIGGER_WORDS.map(w => w.word.toLowerCase()));
+    const escaped = TRIGGER_WORDS.map(w => w.word.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
+    const pattern = new RegExp(`(${escaped.join("|")})`, "gi");
+    const parts = text.split(pattern);
+    parts.forEach(part => {
+        if (wordSet.has(part.toLowerCase())) {
+            const span = document.createElement("span");
+            span.className = "trigger-word-highlight";
+            span.textContent = part;
+            container.appendChild(span);
+        } else {
+            container.appendChild(document.createTextNode(part));
+        }
+    });
 }
 
 function escapeHtml(str) {

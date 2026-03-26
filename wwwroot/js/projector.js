@@ -89,7 +89,7 @@ function addProjMessage(username, text, isHighlighted) {
 
     const textEl = document.createElement("div");
     textEl.className = "proj-message-text";
-    textEl.textContent = text; // textContent undviker XSS
+    applyWordHighlights(textEl, text);
 
     msg.appendChild(header);
     msg.appendChild(textEl);
@@ -134,6 +134,23 @@ function launchSideConfetti() {
         confetti({ particleCount: 60, angle: 60,  spread: 60, origin: { x: 0 } });
         confetti({ particleCount: 60, angle: 120, spread: 60, origin: { x: 1 } });
     }, 200);
+}
+
+function applyWordHighlights(container, text) {
+    const wordSet = new Set(TRIGGER_WORDS.map(w => w.word.toLowerCase()));
+    const escaped = TRIGGER_WORDS.map(w => w.word.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
+    const pattern = new RegExp(`(${escaped.join("|")})`, "gi");
+    const parts = text.split(pattern);
+    parts.forEach(part => {
+        if (wordSet.has(part.toLowerCase())) {
+            const span = document.createElement("span");
+            span.className = "trigger-word-highlight";
+            span.textContent = part;
+            container.appendChild(span);
+        } else {
+            container.appendChild(document.createTextNode(part));
+        }
+    });
 }
 
 function escapeHtml(str) {

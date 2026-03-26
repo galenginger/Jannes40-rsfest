@@ -60,6 +60,17 @@ html, body {
     border-radius: 50%;
 }
 
+.trigger-word-highlight {
+    color: var(--accent);
+    font-weight: 700;
+    animation: word-glow 2s ease-in-out infinite;
+}
+
+@keyframes word-glow {
+    0%, 100% { text-shadow: 0 0 4px var(--accent); }
+    50%       { text-shadow: 0 0 12px var(--accent), 0 0 24px var(--accent); }
+}
+
 @keyframes bounce {
     0%, 100% { transform: rotate(-12deg); }
     50%       { transform: rotate(12deg); }
