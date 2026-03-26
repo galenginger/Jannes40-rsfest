@@ -22,6 +22,12 @@ public class ProjectorModel : PageModel
         _triggerService = triggerService;
     }
 
+    public IActionResult OnPostLogout()
+    {
+        HttpContext.Session.Clear();
+        return RedirectToPage("/Index");
+    }
+
     public IActionResult OnGet()
     {
         if (HttpContext.Session.GetString("authenticated") != "true")

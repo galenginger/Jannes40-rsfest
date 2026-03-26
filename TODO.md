@@ -13,9 +13,9 @@ Testade lite nu, sjukt nice på kort tid 😄 Här kommer några punkter som kan
 [ ] Visa ett meddelande i annan stil när någon joinar chatten (Typ samma emoji och namn men annan 
 backgrundsfärg och kursiv icke-fet text i stil med "Är med på festen!")
 
-[ ] Visa antalet som är inloggade högst upp, typ "Deltagare: 17"
+[x] Visa antalet som är inloggade högst upp, typ "Deltagare: 17"
 
-[ ] Möjlighet att logga ut från projektorsidan utifall man råkar gå in där av misstag
+[x] Möjlighet att logga ut från projektorsidan utifall man råkar gå in där av misstag
 
 [ ] Magiska ord och kombos kan visas på samma rad som "Danne Fyller 40!" För att spara lite utrymme i 
 chatvyn.
