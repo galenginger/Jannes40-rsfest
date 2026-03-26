@@ -4,6 +4,7 @@
 const projMessages = document.getElementById("projector-messages");
 const projWordsEl = document.getElementById("proj-words");
 const projCombosEl = document.getElementById("proj-combos");
+const projParticipantsEl = document.getElementById("proj-participants");
 const triggerOverlay = document.getElementById("trigger-overlay");
 const triggerPopup = document.getElementById("trigger-popup");
 
@@ -51,6 +52,10 @@ connection.on("ReceiveMessage", (username, text, isHighlighted, triggers) => {
 connection.on("UpdateCounters", (state) => {
     projWordsEl.textContent  = state.unlockedWords;
     projCombosEl.textContent = state.unlockedCombos;
+});
+
+connection.on("UpdateParticipants", (count) => {
+    projParticipantsEl.textContent = count;
 });
 
 connection.start().catch(err => console.error("SignalR-anslutning misslyckades:", err));
