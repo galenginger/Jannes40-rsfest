@@ -695,11 +695,25 @@ html, body {
 
 /* ===== Projektor-sida ===== */
 .projector-page {
+    position: relative;
     display: flex;
     flex-direction: column;
     height: 100vh;
-    background: #050510;
+    background: url('/images/face.png') center center / 25% no-repeat;
     overflow: hidden;
+}
+
+.projector-page::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: rgba(5, 5, 16, 0.83);
+    z-index: 0;
+}
+
+.projector-page > * {
+    position: relative;
+    z-index: 1;
 }
 
 .projector-header {
