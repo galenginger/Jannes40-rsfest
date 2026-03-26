@@ -11,6 +11,9 @@ public class ChatHub : Hub
     // ConnectionId -> användarnamn (sätts från session, aldrig från klienten)
     private static readonly ConcurrentDictionary<string, string> _connectionUsers = new();
 
+    // Användarnamn som redan har skickat "Är med på festen!" — återanslutningar spammar inte
+    private static readonly ConcurrentDictionary<string, bool> _announcedUsers = new();
+
     public ChatHub(TriggerService triggerService)
     {
         _triggerService = triggerService;
