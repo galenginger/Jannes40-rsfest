@@ -1,8 +1,8 @@
 using System.Collections.Concurrent;
-using JanneFest.Services;
+using DanneFest.Services;
 using Microsoft.AspNetCore.SignalR;
 
-namespace JanneFest.Hubs;
+namespace DanneFest.Hubs;
 
 public class ChatHub : Hub
 {

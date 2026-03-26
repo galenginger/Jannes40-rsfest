@@ -1,8 +1,8 @@
-using JanneFest.Services;
+using DanneFest.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
-namespace JanneFest.Pages;
+namespace DanneFest.Pages;
 
 public class IndexModel : PageModel
 {
@@ -33,7 +33,7 @@ public class IndexModel : PageModel
         if (HttpContext.Session.GetString("authenticated") == "true")
             return RedirectToPage("/Projector");
 
-        SavedName = Request.Cookies["janne_name"] ?? string.Empty;
+        SavedName = Request.Cookies["danne_name"] ?? string.Empty;
 
         return Page();
     }
@@ -45,7 +45,7 @@ public class IndexModel : PageModel
         if (string.IsNullOrWhiteSpace(Password) || Password != correctPassword)
         {
             ErrorMessage = "Fel lösenord — försök igen!";
-            SavedName = Request.Cookies["janne_name"] ?? string.Empty;
+            SavedName = Request.Cookies["danne_name"] ?? string.Empty;
             return Page();
         }
 
@@ -58,7 +58,7 @@ public class IndexModel : PageModel
 
             HttpContext.Session.SetString("username", cleanName);
 
-            Response.Cookies.Append("janne_name", cleanName, new CookieOptions
+            Response.Cookies.Append("danne_name", cleanName, new CookieOptions
             {
                 Expires = DateTimeOffset.UtcNow.AddHours(12),
                 HttpOnly = false,

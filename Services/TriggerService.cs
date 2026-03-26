@@ -1,7 +1,7 @@
 using System.Text.Json;
-using JanneFest.Models;
+using DanneFest.Models;
 
-namespace JanneFest.Services;
+namespace DanneFest.Services;
 
 // Singleton — trådsäker via _lock.
 public class TriggerService

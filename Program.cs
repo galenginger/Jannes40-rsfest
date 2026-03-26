@@ -1,5 +1,5 @@
-using JanneFest.Hubs;
-using JanneFest.Services;
+using DanneFest.Hubs;
+using DanneFest.Services;
 
 string? cliPassword = null;
 for (int i = 0; i < args.Length; i++)

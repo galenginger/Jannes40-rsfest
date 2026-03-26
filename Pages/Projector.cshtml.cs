@@ -1,9 +1,9 @@
 using System.Text.Json;
-using JanneFest.Services;
+using DanneFest.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
-namespace JanneFest.Pages;
+namespace DanneFest.Pages;
 
 public class ProjectorModel : PageModel
 {

@@ -1,4 +1,4 @@
-namespace JanneFest.Models;
+namespace DanneFest.Models;
 
 public class TriggerWord
 {

@@ -1,6 +1,6 @@
 {
-  "password": "janne40",
-  "highlightedUsers": ["VIPJanne"],
+  "password": "danne40",
+  "highlightedUsers": ["VIPDanne"],
   "words": [
     { "word": "grattis", "emoji": "🎉" },
     { "word": "40", "emoji": "🎂" },
@@ -8,14 +8,14 @@
     { "word": "kärlek", "emoji": "❤️" },
     { "word": "skål", "emoji": "🥂" },
     { "word": "fest", "emoji": "🪩" },
-    { "word": "janne", "emoji": "🎸" },
+    { "word": "danne", "emoji": "🎸" },
     { "word": "Stjärna", "emoji": "⭐" }
   ],
   "combos": [
     {
-      "words": [ "grattis", "janne" ],
+      "words": [ "grattis", "danne" ],
       "emoji": "🥳",
-      "description": "Grattis + Janne"
+      "description": "Grattis + Danne"
     },
     {
       "words": [ "kärlek", "40" ],

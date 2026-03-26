@@ -1,17 +1,17 @@
-# JanneFest — Real-time partychatt
+# DanneFest — Real-time partychatt
 
-En ASP.NET Core Razor Pages-app med SignalR för live-chatt under Jannes 40-årskalas.
+En ASP.NET Core Razor Pages-app med SignalR för live-chatt under Dannes 40-årskalas.
 
 ---
 
 ## Starta appen
 
 ```bash
-cd C:\Users\sebas\OOP2\FrånGustavTillJanne\JanneFest
+cd C:\Users\sebas\OOP2\FrånGustavTillDanne\DanneFest
 dotnet run
 ```
 
-Öppna `http://localhost:5258` — standardlösenordet är **janne40** (ändras i `triggerwords.json`).
+Öppna `http://localhost:5258` — standardlösenordet är **danne40** (ändras i `triggerwords.json`).
 
 ### Lösenord via kommandorad
 
@@ -31,7 +31,7 @@ dotnet run -- --password pingvin123
 - Alla gäster loggar in med ett gemensamt lösenord + eget namn.
 - Namn lagras i **server-side session** — klienten kan inte förfalska avsändare (anti-fusk).
 - Egna meddelanden visas högerställda med rosa ram och glöd för att underlätta egna annonseringar.
-- Cookie `janne_name` sparar namnet för förifyllning vid återbesök (används aldrig för auth).
+- Cookie `danne_name` sparar namnet för förifyllning vid återbesök (används aldrig för auth).
 
 ### 2. Presentationsläge (projektor)
 
