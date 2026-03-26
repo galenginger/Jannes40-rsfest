@@ -444,28 +444,43 @@ html, body {
 }
 
 /* ===== Räknare ===== */
-.counters-bar {
+.header-unlocked-words {
     display: flex;
-    gap: 0.75rem;
-    padding: 0.6rem 1rem;
-    background: var(--bg-card);
-    border-bottom: 1px solid var(--border);
-    flex-shrink: 0;
+    flex-wrap: wrap;
+    gap: 0.3rem;
+    align-items: center;
 }
 
-.counter-card {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
+.header-word-chip {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--accent);
+    animation: word-glow 2s ease-in-out infinite;
+}
+
+.header-word-chip.hw-new {
+    animation: hw-pop 0.5s ease, word-glow 2s ease-in-out 0.5s infinite;
+}
+
+@keyframes hw-pop {
+    0%   { transform: scale(0.5); opacity: 0; }
+    70%  { transform: scale(1.2); opacity: 1; }
+    100% { transform: scale(1); }
+}
+
+.header-counter {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--accent);
     background: var(--bg-input);
     border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 0.4rem 0.8rem;
-    flex: 1;
+    border-radius: 6px;
+    padding: 0.2rem 0.55rem;
+    white-space: nowrap;
     transition: border-color 0.3s;
 }
 
-.counter-card.bump {
+.header-counter.bump {
     border-color: var(--accent);
     animation: counterbump 0.4s ease;
 }
@@ -474,21 +489,6 @@ html, body {
     0%   { transform: scale(1); }
     50%  { transform: scale(1.08); }
     100% { transform: scale(1); }
-}
-
-.counter-icon  { font-size: 1.2rem; }
-
-.counter-label {
-    font-size: 0.75rem;
-    color: var(--text-muted);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-}
-
-.counter-value {
-    font-size: 1rem;
-    font-weight: 700;
-    color: var(--accent);
 }
 
 /* ===== Meddelandeflöde ===== */

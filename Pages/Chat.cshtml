@@ -50,6 +50,9 @@
                 <button class="sidebar-open-btn" id="sidebar-open-btn" title="Visa upplåsta ord">🗝️</button>
                 <span class="chat-logo">🎂</span>
                 <span class="chat-title">Danne fyller 40!</span>
+                <div id="header-unlocked-words" class="header-unlocked-words"></div>
+                <span class="header-counter" id="word-counter">✨ <span id="unlocked-words">@Model.UnlockedWords</span>/<span>@Model.TotalWords</span></span>
+                <span class="header-counter" id="combo-counter">🔥 <span id="unlocked-combos">@Model.UnlockedCombos</span>/<span>@Model.TotalCombos</span></span>
             </div>
             <span class="participant-count">Deltagare: <strong id="participant-count">–</strong></span>
             <div class="chat-header-right">
@@ -59,28 +62,6 @@
                 </form>
             </div>
         </header>
-
-        @* Räknare *@
-        <div class="counters-bar">
-            <div class="counter-card" id="word-counter">
-                <div class="counter-icon">✨</div>
-                <div class="counter-info">
-                    <div class="counter-label">Magiska ord</div>
-                    <div class="counter-value">
-                        <span id="unlocked-words">@Model.UnlockedWords</span>/<span>@Model.TotalWords</span>
-                    </div>
-                </div>
-            </div>
-            <div class="counter-card" id="combo-counter">
-                <div class="counter-icon">🔥</div>
-                <div class="counter-info">
-                    <div class="counter-label">Kombos</div>
-                    <div class="counter-value">
-                        <span id="unlocked-combos">@Model.UnlockedCombos</span>/<span>@Model.TotalCombos</span>
-                    </div>
-                </div>
-            </div>
-        </div>
 
         @* Meddelandeflöde *@
         <div class="messages-container" id="messages">

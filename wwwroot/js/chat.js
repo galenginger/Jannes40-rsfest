@@ -87,6 +87,7 @@ function unlockWordInSidebar(word, emoji) {
     li.innerHTML = `<span class="sw-emoji">${emoji}</span><span class="sw-word">${escapeHtml(word)}</span>`;
     li.classList.add("just-unlocked");
     setTimeout(() => li.classList.remove("just-unlocked"), 1500);
+    addHeaderWordChip(word, emoji, true);
 }
 
 // Uppdatera en kombination i sidopanelen när den låses upp live
@@ -100,11 +101,34 @@ function unlockComboInSidebar(key, description, emoji) {
     setTimeout(() => li.classList.remove("just-unlocked"), 1500);
 }
 
+// ===== Header-ord =====
+
+const headerUnlockedWords = document.getElementById("header-unlocked-words");
+
+function buildHeaderWords() {
+    TRIGGER_WORDS.forEach(w => {
+        if (UNLOCKED_WORDS.has(w.word.toLowerCase()))
+            addHeaderWordChip(w.word, w.emoji, false);
+    });
+}
+
+function addHeaderWordChip(word, emoji, animate) {
+    const id = "hw-" + word.toLowerCase().replace(/\s+/g, "-");
+    if (document.getElementById(id)) return;
+    const span = document.createElement("span");
+    span.id = id;
+    span.className = "header-word-chip" + (animate ? " hw-new" : "");
+    span.textContent = emoji + " " + word;
+    if (animate) setTimeout(() => span.classList.remove("hw-new"), 1000);
+    headerUnlockedWords.appendChild(span);
+}
+
 // Sidopanel öppna/stäng
 sidebarToggle?.addEventListener("click", () => sidebar.classList.add("sidebar-hidden"));
 sidebarOpenBtn?.addEventListener("click", () => sidebar.classList.remove("sidebar-hidden"));
 
 buildSidebar();
+buildHeaderWords();
 
 // ===== SignalR =====
 
