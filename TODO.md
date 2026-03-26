@@ -10,14 +10,14 @@ Testade lite nu, sjukt nice på kort tid 😄 Här kommer några punkter som kan
 
 [x] Janne heter egentligen Danne (Jag skrev fel när jag hade feber :p ) // Fixat
 
-[ ] Visa ett meddelande i annan stil när någon joinar chatten (Typ samma emoji och namn men annan 
+[x] Visa ett meddelande i annan stil när någon joinar chatten (Typ samma emoji och namn men annan 
 backgrundsfärg och kursiv icke-fet text i stil med "Är med på festen!")
 
 [x] Visa antalet som är inloggade högst upp, typ "Deltagare: 17"
 
 [x] Möjlighet att logga ut från projektorsidan utifall man råkar gå in där av misstag
 
-[ ] Magiska ord och kombos kan visas på samma rad som "Danne Fyller 40!" För att spara lite utrymme i 
+[x] Magiska ord och kombos kan visas på samma rad som "Danne Fyller 40!" För att spara lite utrymme i 
 chatvyn.
 I projektorvyn kanske det funkar som det är
 

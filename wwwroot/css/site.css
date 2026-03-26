@@ -577,6 +577,16 @@ html, body {
     box-shadow: 0 0 0 1px rgba(232, 67, 147, 0.25), inset 0 0 12px rgba(232, 67, 147, 0.06);
 }
 
+/* ===== Join-meddelanden ===== */
+.join-bubble {
+    border: 1px solid;
+    border-radius: 12px 12px 12px 2px;
+    padding: 0.45rem 0.75rem;
+    font-style: italic;
+    font-weight: 400;
+    word-break: break-word;
+}
+
 /* ===== Highlighted-meddelanden (synliga för alla) ===== */
 .message.highlighted .message-bubble {
     background: rgba(247, 183, 49, 0.1);

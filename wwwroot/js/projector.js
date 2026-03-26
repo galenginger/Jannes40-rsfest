@@ -58,6 +58,10 @@ connection.on("UpdateParticipants", (count) => {
     projParticipantsEl.textContent = count;
 });
 
+connection.on("UserJoined", (username) => {
+    addProjJoinMessage(username);
+});
+
 connection.start().catch(err => console.error("SignalR-anslutning misslyckades:", err));
 
 // Lägger till ett nytt meddelande i projektor-vyn och tar bort gamla om det blir för många
@@ -134,6 +138,52 @@ function launchSideConfetti() {
         confetti({ particleCount: 60, angle: 60,  spread: 60, origin: { x: 0 } });
         confetti({ particleCount: 60, angle: 120, spread: 60, origin: { x: 1 } });
     }, 200);
+}
+
+function randomJoinColor() {
+    const h = Math.floor(Math.random() * 360);
+    return {
+        color:      `hsl(${h}, 70%, 72%)`,
+        background: `hsla(${h}, 70%, 50%, 0.08)`,
+        border:     `hsla(${h}, 70%, 60%, 0.35)`
+    };
+}
+
+function addProjJoinMessage(username) {
+    const msg = document.createElement("div");
+    msg.className = "proj-message join-message";
+
+    const header = document.createElement("div");
+    header.className = "proj-message-header";
+
+    const avatarEl = document.createElement("div");
+    avatarEl.className = "proj-message-avatar";
+    const avatarImg = document.createElement("img");
+    avatarImg.src = generateAvatar(username, 42);
+    avatarImg.alt = username.charAt(0).toUpperCase();
+    avatarEl.appendChild(avatarImg);
+
+    const nameEl = document.createElement("div");
+    nameEl.className = "proj-message-name";
+    nameEl.textContent = username;
+
+    header.appendChild(avatarEl);
+    header.appendChild(nameEl);
+
+    const c = randomJoinColor();
+    const textEl = document.createElement("div");
+    textEl.className = "proj-message-text join-bubble";
+    textEl.style.color       = c.color;
+    textEl.style.background  = c.background;
+    textEl.style.borderColor = c.border;
+    textEl.textContent = "Är med på festen! 🎉";
+
+    msg.appendChild(header);
+    msg.appendChild(textEl);
+    projMessages.insertBefore(msg, projMessages.firstChild);
+
+    while (projMessages.children.length > MAX_MESSAGES)
+        projMessages.removeChild(projMessages.lastChild);
 }
 
 function applyWordHighlights(container, text) {

@@ -183,6 +183,10 @@ connection.on("UpdateParticipants", (count) => {
     document.getElementById("participant-count").textContent = count;
 });
 
+connection.on("UserJoined", (username) => {
+    addJoinMessage(username);
+});
+
 connection.start()
     .then(() => {
         sendBtn.disabled = false;
@@ -314,6 +318,49 @@ function launchSideConfetti() {
         confetti({ particleCount: 40, angle: 60,  spread: 55, origin: { x: 0 } });
         confetti({ particleCount: 40, angle: 120, spread: 55, origin: { x: 1 } });
     }, 200);
+}
+
+function randomJoinColor() {
+    const h = Math.floor(Math.random() * 360);
+    return {
+        color:      `hsl(${h}, 70%, 72%)`,
+        background: `hsla(${h}, 70%, 50%, 0.08)`,
+        border:     `hsla(${h}, 70%, 60%, 0.35)`
+    };
+}
+
+function addJoinMessage(username) {
+    const wrapper = document.createElement("div");
+    wrapper.className = "message join-message";
+
+    const avatar = document.createElement("div");
+    avatar.className = "message-avatar";
+    const avatarImg = document.createElement("img");
+    avatarImg.src = generateAvatar(username);
+    avatarImg.alt = username.charAt(0).toUpperCase();
+    avatar.appendChild(avatarImg);
+
+    const body = document.createElement("div");
+    body.className = "message-body";
+
+    const meta = document.createElement("div");
+    meta.className = "message-meta";
+    meta.textContent = username;
+
+    const c = randomJoinColor();
+    const bubble = document.createElement("div");
+    bubble.className = "message-bubble join-bubble";
+    bubble.style.color           = c.color;
+    bubble.style.background      = c.background;
+    bubble.style.borderColor     = c.border;
+    bubble.textContent = "Är med på festen! 🎉";
+
+    body.appendChild(meta);
+    body.appendChild(bubble);
+    wrapper.appendChild(avatar);
+    wrapper.appendChild(body);
+    messagesInner.appendChild(wrapper);
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
 }
 
 function applyWordHighlights(container, text) {
