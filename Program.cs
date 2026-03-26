@@ -1,5 +1,6 @@
 using DanneFest.Hubs;
 using DanneFest.Services;
+using Microsoft.AspNetCore.HttpOverrides;
 
 string? cliPassword = null;
 for (int i = 0; i < args.Length; i++)
