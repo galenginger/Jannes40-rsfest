@@ -39,6 +39,10 @@ builder.Services.AddSingleton<TriggerService>();
 
 var app = builder.Build();
 
+app.UsePathBase("/danne"); //Eftersom siten servas under suvnet.se/danne
+
+app.UseHttpsRedirection();
+
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Error");
