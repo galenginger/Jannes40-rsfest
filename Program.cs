@@ -66,7 +66,7 @@ app.UseRouting();
 app.UseSession();
 
 app.MapRazorPages();
-app.MapHub<ChatHub>("/chathub");
+app.MapHub<ChatHub>("/danne/chathub");
 
 app.Services.GetRequiredService<TriggerService>().Initialize(cliPassword);
 
