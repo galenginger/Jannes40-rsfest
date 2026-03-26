@@ -24,6 +24,8 @@ builder.Services.AddRazorPages();
 builder.Services.AddSignalR(options =>
 {
     options.EnableDetailedErrors = builder.Environment.IsDevelopment();
+    options.KeepAliveInterval = TimeSpan.FromSeconds(30);
+    options.ClientTimeoutInterval = TimeSpan.FromMinutes(5);
 });
 
 builder.Services.Configure<ForwardedHeadersOptions>(options =>

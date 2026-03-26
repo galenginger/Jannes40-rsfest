@@ -160,8 +160,25 @@ buildHeaderWords();
 
 const connection = new signalR.HubConnectionBuilder()
     .withUrl(SIGNALR_URL)
-    .withAutomaticReconnect()
+    .withAutomaticReconnect({ nextRetryDelayInMilliseconds: () => 2000 })
     .build();
+
+const reconnectBanner = document.createElement("div");
+reconnectBanner.id = "reconnect-banner";
+reconnectBanner.className = "reconnect-banner";
+reconnectBanner.textContent = "Återansluter...";
+reconnectBanner.hidden = true;
+document.querySelector(".chat-main").prepend(reconnectBanner);
+
+connection.onreconnecting(() => { reconnectBanner.hidden = false; });
+connection.onreconnected(() => { reconnectBanner.hidden = true; });
+
+// Kicka igång reconnect direkt när skärmen låses upp
+document.addEventListener("visibilitychange", () => {
+    if (!document.hidden && connection.state === signalR.HubConnectionState.Disconnected) {
+        connection.start().catch(err => console.error("Reconnect misslyckades:", err));
+    }
+});
 
 connection.on("ReceiveMessage", (username, text, isHighlighted, triggers) => {
     addMessage(username, text, isHighlighted);

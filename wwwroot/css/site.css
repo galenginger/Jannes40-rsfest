@@ -605,6 +605,18 @@ html, body {
     font-weight: 700;
 }
 
+/* ===== Reconnect-banner ===== */
+.reconnect-banner {
+    background: rgba(232, 67, 147, 0.15);
+    border-bottom: 1px solid var(--accent2);
+    color: var(--accent2);
+    text-align: center;
+    font-size: 0.85rem;
+    font-weight: 600;
+    padding: 0.4rem;
+    flex-shrink: 0;
+}
+
 /* ===== Scroll-to-bottom-knapp ===== */
 .scroll-to-bottom-btn {
     position: sticky;
