@@ -1,5 +1,6 @@
 using DanneFest.Hubs;
 using DanneFest.Services;
+using Microsoft.AspNetCore.HttpOverrides;
 
 string? cliPassword = null;
 for (int i = 0; i < args.Length; i++)
@@ -25,6 +26,15 @@ builder.Services.AddSignalR(options =>
     options.EnableDetailedErrors = builder.Environment.IsDevelopment();
 });
 
+builder.Services.Configure<ForwardedHeadersOptions>(options =>
+{
+    options.ForwardedHeaders =
+        ForwardedHeaders.XForwardedFor |
+        ForwardedHeaders.XForwardedProto;
+
+    options.KnownProxies.Add(System.Net.IPAddress.Parse("127.0.0.1"));
+});
+
 builder.Services.AddDistributedMemoryCache();
 builder.Services.AddSession(options =>
 {
@@ -39,19 +49,24 @@ builder.Services.AddSingleton<TriggerService>();
 
 var app = builder.Build();
 
+app.UseForwardedHeaders();
+
+app.UsePathBase("/danne"); //Eftersom siten servas under suvnet.se/danne
+
+
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Error");
     app.UseHsts();
 }
 
-app.UsePathBase("/danne");
+app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseRouting();
 app.UseSession();
 
 app.MapRazorPages();
-app.MapHub<ChatHub>("/chathub");
+app.MapHub<ChatHub>("/danne/chathub");
 
 app.Services.GetRequiredService<TriggerService>().Initialize(cliPassword);
 
