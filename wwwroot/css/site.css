@@ -256,6 +256,7 @@ html, body {
 .chat-app {
     display: flex;
     height: 100vh;
+    height: 100dvh;
     overflow: hidden;
 }
 
@@ -857,12 +858,34 @@ html, body {
     .sidebar:not(.sidebar-hidden) { width: 200px; opacity: 1; overflow-y: auto; }
 
     .chat-header {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 0.4rem;
+        padding: 0.4rem 0.6rem;
+        gap: 0.3rem;
+        flex-wrap: wrap;
     }
 
-    .chat-header-right { align-self: flex-end; }
+    .chat-header-left {
+        gap: 0.3rem;
+        flex: 1;
+        min-width: 0;
+    }
+
+    .chat-logo { font-size: 1.1rem; }
+
+    .chat-title { font-size: 0.9rem; }
+
+    .header-unlocked-words { display: none; }
+
+    .header-counter { font-size: 0.75rem; padding: 0.15rem 0.4rem; }
+
+    .chat-header-right {
+        gap: 0.4rem;
+        flex-wrap: nowrap;
+    }
+
+    /* Dölj texten "Inloggad som" och "Deltagare:", visa bara värdena */
+    .chat-username { display: none; }
+
+    .participant-count { font-size: 0.8rem; }
 
     .message { max-width: 92%; }
 
