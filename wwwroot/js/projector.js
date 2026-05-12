@@ -16,8 +16,11 @@ const connection = new signalR.HubConnectionBuilder()
     .withAutomaticReconnect()
     .build();
 
-connection.on("ReceiveMessage", (username, text, isHighlighted, triggers) => {
-    addProjMessage(username, text, isHighlighted);
+let lastMessageTime = null;
+
+connection.on("ReceiveMessage", (username, text, isHighlighted, triggers, timestamp) => {
+    lastMessageTime = timestamp;
+    addProjMessage(username, text, isHighlighted, timestamp);
 
     if (triggers.totalUnlockedWords !== undefined) {
         projWordsEl.textContent  = triggers.totalUnlockedWords;
@@ -64,8 +67,21 @@ connection.on("UserJoined", (username) => {
 
 connection.start().catch(err => console.error("SignalR-anslutning misslyckades:", err));
 
+connection.onreconnected(async () => {
+    if (lastMessageTime !== null) {
+        try {
+            const history = await connection.invoke("GetHistory", lastMessageTime);
+            if (history && history.length > 0) {
+                history.forEach(msg => addProjMessage(msg.username, msg.text, msg.isHighlighted, msg.timestamp));
+            }
+        } catch (err) {
+            console.error("GetHistory (projector) misslyckades:", err);
+        }
+    }
+});
+
 // Lägger till ett nytt meddelande i projektor-vyn och tar bort gamla om det blir för många
-function addProjMessage(username, text, isHighlighted) {
+function addProjMessage(username, text, isHighlighted, timestamp = null) {
     const msg = document.createElement("div");
     msg.className = "proj-message" + (isHighlighted ? " highlighted" : "");
 
@@ -85,7 +101,7 @@ function addProjMessage(username, text, isHighlighted) {
 
     const timeEl = document.createElement("span");
     timeEl.className = "proj-message-time";
-    timeEl.textContent = new Date().toLocaleTimeString("sv-SE", { hour: "2-digit", minute: "2-digit" });
+    timeEl.textContent = new Date(timestamp || Date.now()).toLocaleTimeString("sv-SE", { hour: "2-digit", minute: "2-digit" });
 
     header.appendChild(avatarEl);
     header.appendChild(nameEl);

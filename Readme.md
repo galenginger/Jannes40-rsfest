@@ -7,11 +7,10 @@ En ASP.NET Core Razor Pages-app med SignalR för live-chatt under Dannes 40-års
 ## Starta appen
 
 ```bash
-cd C:\Users\sebas\OOP2\FrånGustavTillDanne\DanneFest
 dotnet run
 ```
 
-Öppna `http://localhost:5258` — standardlösenordet är **danne40** (ändras i `triggerwords.json`).
+Öppna `http://localhost:5258`
 
 ### Lösenord via kommandorad
 

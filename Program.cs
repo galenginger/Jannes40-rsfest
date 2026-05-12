@@ -3,6 +3,7 @@ using DanneFest.Services;
 using Microsoft.AspNetCore.HttpOverrides;
 
 string? cliPassword = null;
+
 for (int i = 0; i < args.Length; i++)
 {
     if (args[i] == "--password" && i + 1 < args.Length)
@@ -48,6 +49,7 @@ builder.Services.AddSession(options =>
 });
 
 builder.Services.AddSingleton<TriggerService>();
+builder.Services.AddSingleton<MessageHistoryService>();
 
 var app = builder.Build();
 

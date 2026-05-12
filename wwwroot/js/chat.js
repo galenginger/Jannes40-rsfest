@@ -173,8 +173,26 @@ reconnectBanner.textContent = "Återansluter...";
 reconnectBanner.hidden = true;
 document.querySelector(".chat-main").prepend(reconnectBanner);
 
+let lastMessageTime = null;
+
 connection.onreconnecting(() => { reconnectBanner.hidden = false; });
-connection.onreconnected(() => { reconnectBanner.hidden = true; });
+connection.onreconnected(async () => {
+    reconnectBanner.hidden = true;
+    if (lastMessageTime !== null) {
+        try {
+            const history = await connection.invoke("GetHistory", lastMessageTime);
+            if (history && history.length > 0) {
+                const sep = document.createElement("div");
+                sep.className = "history-separator";
+                sep.textContent = `— ${history.length} meddelande${history.length > 1 ? "n" : ""} du missade —`;
+                messagesInner.appendChild(sep);
+                history.forEach(msg => addMessage(msg.username, msg.text, msg.isHighlighted, msg.timestamp));
+            }
+        } catch (err) {
+            console.error("GetHistory misslyckades:", err);
+        }
+    }
+});
 
 // Kicka igång reconnect direkt när skärmen låses upp
 document.addEventListener("visibilitychange", () => {
@@ -183,8 +201,9 @@ document.addEventListener("visibilitychange", () => {
     }
 });
 
-connection.on("ReceiveMessage", (username, text, isHighlighted, triggers) => {
-    addMessage(username, text, isHighlighted);
+connection.on("ReceiveMessage", (username, text, isHighlighted, triggers, timestamp) => {
+    lastMessageTime = timestamp;
+    addMessage(username, text, isHighlighted, timestamp);
 
     if (triggers.totalUnlockedWords !== undefined) {
         updateCounters(triggers.totalUnlockedWords, triggers.totalUnlockedCombos);
@@ -285,7 +304,7 @@ function sendMessage() {
 
 // ===== Hjälpfunktioner =====
 
-function addMessage(username, text, isHighlighted) {
+function addMessage(username, text, isHighlighted, timestamp = null) {
     const isOwn = username === MY_NAME;
 
     const wrapper = document.createElement("div");
@@ -311,7 +330,7 @@ function addMessage(username, text, isHighlighted) {
 
     const time = document.createElement("span");
     time.className = "message-time";
-    time.textContent = formatTime(new Date());
+    time.textContent = formatTime(timestamp ? new Date(timestamp) : new Date());
 
     body.appendChild(meta);
     body.appendChild(bubble);

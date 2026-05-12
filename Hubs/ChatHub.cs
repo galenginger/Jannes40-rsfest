@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using DanneFest.Models;
 using DanneFest.Services;
 using Microsoft.AspNetCore.SignalR;
 
@@ -7,6 +8,7 @@ namespace DanneFest.Hubs;
 public class ChatHub : Hub
 {
     private readonly TriggerService _triggerService;
+    private readonly MessageHistoryService _historyService;
 
     // ConnectionId -> användarnamn (sätts från session, aldrig från klienten)
     private static readonly ConcurrentDictionary<string, string> _connectionUsers = new();
@@ -14,9 +16,10 @@ public class ChatHub : Hub
     // Användarnamn som redan har skickat "Är med på festen!" — återanslutningar spammar inte
     private static readonly ConcurrentDictionary<string, bool> _announcedUsers = new();
 
-    public ChatHub(TriggerService triggerService)
+    public ChatHub(TriggerService triggerService, MessageHistoryService historyService)
     {
         _triggerService = triggerService;
+        _historyService = historyService;
     }
 
     public override async Task OnConnectedAsync()
@@ -74,6 +77,7 @@ public class ChatHub : Hub
 
         var triggerResult = _triggerService.CheckMessage(text);
         var isHighlighted = _triggerService.IsHighlightedUser(username);
+        var timestamp = DateTime.UtcNow;
 
         await Clients.All.SendAsync("ReceiveMessage", username, text, isHighlighted, new
         {
@@ -81,6 +85,19 @@ public class ChatHub : Hub
             newCombos = triggerResult.NewlyUnlockedCombos.Select(c => new { c.Description, c.Emoji }).ToList(),
             totalUnlockedWords = triggerResult.TotalUnlockedWords,
             totalUnlockedCombos = triggerResult.TotalUnlockedCombos
+        }, timestamp.ToString("O"));
+
+        _historyService.Add(new MessageRecord
+        {
+            Username = username,
+            Text = text,
+            IsHighlighted = isHighlighted,
+            Timestamp = timestamp
         });
+    }
+
+    public Task<List<MessageRecord>> GetHistory(DateTime since)
+    {
+        return Task.FromResult(_historyService.GetMessagesSince(since));
     }
 }
