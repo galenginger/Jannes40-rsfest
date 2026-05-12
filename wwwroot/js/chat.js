@@ -135,8 +135,8 @@ function addHeaderWordChip(word, emoji, animate) {
 }
 
 // Sidopanel öppna/stäng
-// Dölj sidopanelen från start på mobil
-if (window.innerWidth <= 600) sidebar?.classList.add("sidebar-hidden");
+// Dölj sidopanelen från start på alla skärmstorlekar
+sidebar?.classList.add("sidebar-hidden");
 
 sidebarToggle?.addEventListener("click", () => sidebar.classList.add("sidebar-hidden"));
 sidebarOpenBtn?.addEventListener("click", () => sidebar.classList.remove("sidebar-hidden"));
