@@ -192,7 +192,7 @@ function addProjJoinMessage(username) {
     textEl.style.color       = c.color;
     textEl.style.background  = c.background;
     textEl.style.borderColor = c.border;
-    textEl.textContent = "Är med på festen! 🎉";
+    textEl.textContent = "Är med på festen!";
 
     msg.appendChild(header);
     msg.appendChild(textEl);

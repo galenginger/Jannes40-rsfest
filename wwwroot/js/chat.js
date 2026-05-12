@@ -403,7 +403,7 @@ function addJoinMessage(username) {
     bubble.style.color           = c.color;
     bubble.style.background      = c.background;
     bubble.style.borderColor     = c.border;
-    bubble.textContent = "Är med på festen! 🎉";
+    bubble.textContent = "Är med på festen!";
 
     body.appendChild(meta);
     body.appendChild(bubble);
