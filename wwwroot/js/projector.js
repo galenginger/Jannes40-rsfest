@@ -11,8 +11,13 @@ const triggerPopup = document.getElementById("trigger-popup");
 // Max antal synliga meddelanden i projektor-vyn (äldre tas bort)
 const MAX_MESSAGES = 30;
 
+const isBraveBrowser = !!navigator.brave;
+const signalrTransportOptions = isBraveBrowser
+    ? { transport: signalR.HttpTransportType.LongPolling }
+    : undefined;
+
 const connection = new signalR.HubConnectionBuilder()
-    .withUrl(SIGNALR_URL)
+    .withUrl(SIGNALR_URL, signalrTransportOptions)
     .withAutomaticReconnect()
     .build();
 

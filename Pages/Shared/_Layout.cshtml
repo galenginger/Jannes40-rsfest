@@ -13,17 +13,25 @@
     @* canvas-confetti via CDN — används för triggerord-animationer *@
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
 
-    @* SignalR client-bibliotek *@
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.7/signalr.min.js"></script>
+    @* SignalR client-bibliotek: lokal fil först, CDN som fallback *@
+    <script src="~/lib/signalr/signalr.min.js" asp-append-version="true"></script>
+    <script>
+        if (typeof signalR === "undefined") {
+        const fallback = document.createElement("script");
+        fallback.src = "https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.7/signalr.min.js";
+        document.head.appendChild(fallback);
+        }
+    </script>
 
     @* Deterministisk avatar-generator — delas av chatt och projektor *@
     <script src="~/js/avatar.js" asp-append-version="true"></script>
 
     <script>
-        const SIGNALR_URL   = '@Url.Content("~/chathub")';
+        const SIGNALR_URL = '@Url.Content("~/chathub")';
 
     </script>
 
     @await RenderSectionAsync("Scripts", required: false)
 </body>
+
 </html>

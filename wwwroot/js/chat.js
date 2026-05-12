@@ -146,8 +146,13 @@ buildHeaderWords();
 
 // ===== SignalR =====
 
+const isBraveBrowser = !!navigator.brave;
+const signalrTransportOptions = isBraveBrowser
+    ? { transport: signalR.HttpTransportType.LongPolling }
+    : undefined;
+
 const connection = new signalR.HubConnectionBuilder()
-    .withUrl(SIGNALR_URL)
+    .withUrl(SIGNALR_URL, signalrTransportOptions)
     .withAutomaticReconnect({ nextRetryDelayInMilliseconds: () => 2000 })
     .build();
 
