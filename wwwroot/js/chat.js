@@ -4,7 +4,6 @@
 
 const messagesInner     = document.getElementById("messages-inner");
 const messagesContainer = document.getElementById("messages");
-const scrollToBottomBtn = document.getElementById("scroll-to-bottom");
 const messageInput      = document.getElementById("message-input");
 const sendBtn           = document.getElementById("send-btn");
 const charCounter       = document.getElementById("char-counter");
@@ -27,28 +26,14 @@ messageInput.addEventListener("input", updateCharCounter);
 
 // ===== Auto-scroll =====
 
-function isNearBottom() {
-    return messagesContainer.scrollHeight - messagesContainer.scrollTop - messagesContainer.clientHeight < 120;
-}
-
 function scrollToBottom() {
     messagesContainer.scrollTop = messagesContainer.scrollHeight;
-    scrollToBottomBtn.hidden = true;
 }
 
 function onNewMessage() {
-    if (isNearBottom()) {
-        scrollToBottom();
-    } else {
-        scrollToBottomBtn.hidden = false;
-    }
+    scrollToBottom();
 }
 
-messagesContainer.addEventListener("scroll", () => {
-    if (isNearBottom()) scrollToBottomBtn.hidden = true;
-});
-
-scrollToBottomBtn.addEventListener("click", scrollToBottom);
 const emojiBtn         = document.getElementById("emoji-btn");
 const emojiPicker      = document.getElementById("emoji-picker");
 const unlockedWordsEl  = document.getElementById("unlocked-words");
