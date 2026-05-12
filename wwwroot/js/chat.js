@@ -164,10 +164,52 @@ reconnectBanner.hidden = true;
 document.querySelector(".chat-main").prepend(reconnectBanner);
 
 let lastMessageTime = null;
+let manualReconnectTimer = null;
 
-connection.onreconnecting(() => { reconnectBanner.hidden = false; });
+function stopManualReconnectLoop() {
+    if (manualReconnectTimer !== null) {
+        clearInterval(manualReconnectTimer);
+        manualReconnectTimer = null;
+    }
+}
+
+function startManualReconnectLoop() {
+    if (manualReconnectTimer !== null) return;
+    manualReconnectTimer = setInterval(() => {
+        if (connection.state === signalR.HubConnectionState.Connected) {
+            stopManualReconnectLoop();
+            return;
+        }
+
+        if (connection.state === signalR.HubConnectionState.Disconnected) {
+            connection.start().catch(err => console.error("Manuell reconnect misslyckades:", err));
+        }
+    }, 3000);
+}
+
+async function startConnection() {
+    try {
+        await connection.start();
+        stopManualReconnectLoop();
+        reconnectBanner.hidden = true;
+        sendBtn.disabled = false;
+        messageInput.focus();
+    } catch (err) {
+        console.error("SignalR-anslutning misslyckades:", err);
+        reconnectBanner.hidden = false;
+        sendBtn.disabled = true;
+        startManualReconnectLoop();
+    }
+}
+
+connection.onreconnecting(() => {
+    reconnectBanner.hidden = false;
+    sendBtn.disabled = true;
+});
 connection.onreconnected(async () => {
+    stopManualReconnectLoop();
     reconnectBanner.hidden = true;
+    sendBtn.disabled = false;
     if (lastMessageTime !== null) {
         try {
             const history = await connection.invoke("GetHistory", lastMessageTime);
@@ -184,10 +226,28 @@ connection.onreconnected(async () => {
     }
 });
 
+connection.onclose(() => {
+    reconnectBanner.hidden = false;
+    sendBtn.disabled = true;
+    startManualReconnectLoop();
+});
+
 // Kicka igång reconnect direkt när skärmen låses upp
 document.addEventListener("visibilitychange", () => {
-    if (!document.hidden && connection.state === signalR.HubConnectionState.Disconnected) {
-        connection.start().catch(err => console.error("Reconnect misslyckades:", err));
+    if (!document.hidden && connection.state !== signalR.HubConnectionState.Connected) {
+        startConnection();
+    }
+});
+
+window.addEventListener("focus", () => {
+    if (connection.state !== signalR.HubConnectionState.Connected) {
+        startConnection();
+    }
+});
+
+window.addEventListener("pageshow", () => {
+    if (connection.state !== signalR.HubConnectionState.Connected) {
+        startConnection();
     }
 });
 
@@ -242,12 +302,8 @@ connection.on("UserJoined", (username) => {
     addJoinMessage(username);
 });
 
-connection.start()
-    .then(() => {
-        sendBtn.disabled = false;
-        messageInput.focus();
-    })
-    .catch(err => console.error("SignalR-anslutning misslyckades:", err));
+sendBtn.disabled = true;
+startConnection();
 
 // ===== Skicka meddelande =====
 

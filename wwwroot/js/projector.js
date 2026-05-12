@@ -22,6 +22,38 @@ const connection = new signalR.HubConnectionBuilder()
     .build();
 
 let lastMessageTime = null;
+let manualReconnectTimer = null;
+
+function stopManualReconnectLoop() {
+    if (manualReconnectTimer !== null) {
+        clearInterval(manualReconnectTimer);
+        manualReconnectTimer = null;
+    }
+}
+
+function startManualReconnectLoop() {
+    if (manualReconnectTimer !== null) return;
+    manualReconnectTimer = setInterval(() => {
+        if (connection.state === signalR.HubConnectionState.Connected) {
+            stopManualReconnectLoop();
+            return;
+        }
+
+        if (connection.state === signalR.HubConnectionState.Disconnected) {
+            connection.start().catch(err => console.error("Projector reconnect misslyckades:", err));
+        }
+    }, 3000);
+}
+
+async function startConnection() {
+    try {
+        await connection.start();
+        stopManualReconnectLoop();
+    } catch (err) {
+        console.error("SignalR-anslutning misslyckades:", err);
+        startManualReconnectLoop();
+    }
+}
 
 connection.on("ReceiveMessage", (username, text, isHighlighted, triggers, timestamp) => {
     lastMessageTime = timestamp;
@@ -70,9 +102,10 @@ connection.on("UserJoined", (username) => {
     addProjJoinMessage(username);
 });
 
-connection.start().catch(err => console.error("SignalR-anslutning misslyckades:", err));
+startConnection();
 
 connection.onreconnected(async () => {
+    stopManualReconnectLoop();
     if (lastMessageTime !== null) {
         try {
             const history = await connection.invoke("GetHistory", lastMessageTime);
@@ -82,6 +115,28 @@ connection.onreconnected(async () => {
         } catch (err) {
             console.error("GetHistory (projector) misslyckades:", err);
         }
+    }
+});
+
+connection.onclose(() => {
+    startManualReconnectLoop();
+});
+
+document.addEventListener("visibilitychange", () => {
+    if (!document.hidden && connection.state !== signalR.HubConnectionState.Connected) {
+        startConnection();
+    }
+});
+
+window.addEventListener("focus", () => {
+    if (connection.state !== signalR.HubConnectionState.Connected) {
+        startConnection();
+    }
+});
+
+window.addEventListener("pageshow", () => {
+    if (connection.state !== signalR.HubConnectionState.Connected) {
+        startConnection();
     }
 });
 
