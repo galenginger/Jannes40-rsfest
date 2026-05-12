@@ -26,7 +26,7 @@ builder.Services.AddSignalR(options =>
 {
     options.EnableDetailedErrors = builder.Environment.IsDevelopment();
     options.KeepAliveInterval = TimeSpan.FromSeconds(30);
-    options.ClientTimeoutInterval = TimeSpan.FromMinutes(5);
+    options.ClientTimeoutInterval = TimeSpan.FromMinutes(60);
 });
 
 builder.Services.Configure<ForwardedHeadersOptions>(options =>
