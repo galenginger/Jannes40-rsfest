@@ -13,9 +13,6 @@ public class ChatHub : Hub
     // ConnectionId -> användarnamn (sätts från session, aldrig från klienten)
     private static readonly ConcurrentDictionary<string, string> _connectionUsers = new();
 
-    // Användarnamn som redan har skickat "Är med på festen!" — återanslutningar spammar inte
-    private static readonly ConcurrentDictionary<string, bool> _announcedUsers = new();
-
     public ChatHub(TriggerService triggerService, MessageHistoryService historyService)
     {
         _triggerService = triggerService;
@@ -61,14 +58,7 @@ public class ChatHub : Hub
             totalCombos = _triggerService.TotalComboCount
         });
 
-        await BroadcastParticipantCount();
-
-        // Meddelandena "Är med på festen" är inaktiverade
-        // if (_connectionUsers.TryGetValue(Context.ConnectionId, out var joinedUser) && !string.IsNullOrEmpty(joinedUser))
-        // {
-        //     if (_announcedUsers.TryAdd(joinedUser, true))
-        //         await Clients.Others.SendAsync("UserJoined", joinedUser);
-        // }
+        await BroadcastParticipants();
 
         await base.OnConnectedAsync();
     }
@@ -76,14 +66,23 @@ public class ChatHub : Hub
     public override async Task OnDisconnectedAsync(Exception? exception)
     {
         _connectionUsers.TryRemove(Context.ConnectionId, out _);
-        await BroadcastParticipantCount();
+        await BroadcastParticipants();
         await base.OnDisconnectedAsync(exception);
     }
 
-    private Task BroadcastParticipantCount()
+    private Task BroadcastParticipants()
     {
-        var count = _connectionUsers.Values.Count(u => !string.IsNullOrEmpty(u));
-        return Clients.All.SendAsync("UpdateParticipants", count);
+        var participants = _connectionUsers.Values
+            .Where(u => !string.IsNullOrWhiteSpace(u))
+            .Select(u => u.Trim())
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .OrderBy(u => u, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        return Task.WhenAll(
+            Clients.All.SendAsync("UpdateParticipants", participants.Count),
+            Clients.All.SendAsync("UpdateParticipantList", participants)
+        );
     }
 
     public async Task SendMessage(string text)

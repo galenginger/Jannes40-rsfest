@@ -440,6 +440,79 @@ html, body {
     white-space: nowrap;
 }
 
+.participant-toggle {
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 999px;
+    padding: 0.2rem 0.5rem;
+    cursor: pointer;
+    transition: border-color 0.15s, color 0.15s, background 0.15s;
+}
+
+.participant-toggle:hover {
+    color: var(--text);
+    border-color: var(--border);
+    background: rgba(255,255,255,0.04);
+}
+
+.participant-panel {
+    position: absolute;
+    top: 3.7rem;
+    left: 0.8rem;
+    width: min(320px, calc(100vw - 1.6rem));
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+    z-index: 40;
+    overflow: hidden;
+}
+
+.participant-panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.6rem;
+    padding: 0.65rem 0.8rem;
+    border-bottom: 1px solid var(--border);
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--accent);
+}
+
+.participant-panel-close {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    cursor: pointer;
+}
+
+.participant-list {
+    list-style: none;
+    padding: 0.4rem;
+    max-height: 260px;
+    overflow-y: auto;
+}
+
+.participant-list-item {
+    padding: 0.4rem 0.55rem;
+    border-radius: 8px;
+    font-size: 0.92rem;
+    color: var(--text);
+}
+
+.participant-list-item:nth-child(odd) {
+    background: rgba(255,255,255,0.03);
+}
+
+.participant-list-empty {
+    padding: 0.6rem 0.55rem;
+    font-size: 0.86rem;
+    color: var(--text-muted);
+    font-style: italic;
+}
+
 /* ===== Räknare ===== */
 .header-unlocked-words {
     display: flex;
@@ -934,6 +1007,10 @@ html, body {
     .chat-username { display: none; }
 
     .participant-count { font-size: 0.8rem; }
+
+    .participant-panel {
+        top: 3.4rem;
+    }
 
     .message { max-width: 92%; }
 

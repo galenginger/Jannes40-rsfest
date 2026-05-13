@@ -49,7 +49,9 @@
             <div class="chat-header-left">
                 <button class="sidebar-open-btn" id="sidebar-open-btn" title="Visa upplåsta ord">🗝️</button>
                 <span class="chat-title">Danne fyller 40!</span>
-                <span class="participant-count">👥 <span id="participant-count">–</span></span>
+                <button type="button" class="participant-count participant-toggle" id="participant-toggle" title="Visa deltagare" aria-haspopup="dialog" aria-expanded="false" aria-controls="participant-panel">
+                    👥 <span id="participant-count">–</span>
+                </button>
             </div>
             <div class="chat-header-right">
                 <span class="chat-username"><strong>@Model.Username</strong></span>
@@ -58,6 +60,14 @@
                 </form>
             </div>
         </header>
+
+        <div id="participant-panel" class="participant-panel" hidden>
+            <div class="participant-panel-header">
+                <span>Deltagare online</span>
+                <button type="button" class="participant-panel-close" id="participant-close" title="Stäng">✕</button>
+            </div>
+            <ul id="participant-list" class="participant-list"></ul>
+        </div>
 
         @* Meddelandeflöde *@
         <div class="messages-container" id="messages">

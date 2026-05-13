@@ -45,6 +45,11 @@ const triggerPopup     = document.getElementById("trigger-popup");
 const sidebar          = document.getElementById("sidebar");
 const sidebarToggle    = document.getElementById("sidebar-toggle");
 const sidebarOpenBtn   = document.getElementById("sidebar-open-btn");
+const participantToggle = document.getElementById("participant-toggle");
+const participantPanel  = document.getElementById("participant-panel");
+const participantList   = document.getElementById("participant-list");
+const participantClose  = document.getElementById("participant-close");
+const participantCountEl = document.getElementById("participant-count");
 const sbWordsEl        = document.getElementById("sb-words");
 const sbCombosEl       = document.getElementById("sb-combos");
 const sidebarWordsList  = document.getElementById("sidebar-words");
@@ -142,6 +147,33 @@ sidebar?.classList.add("sidebar-hidden");
 
 sidebarToggle?.addEventListener("click", () => sidebar.classList.add("sidebar-hidden"));
 sidebarOpenBtn?.addEventListener("click", () => sidebar.classList.remove("sidebar-hidden"));
+
+function setParticipantPanelOpen(isOpen) {
+    if (!participantPanel || !participantToggle) return;
+    participantPanel.hidden = !isOpen;
+    participantToggle.setAttribute("aria-expanded", isOpen ? "true" : "false");
+}
+
+participantToggle?.addEventListener("click", (e) => {
+    e.stopPropagation();
+    setParticipantPanelOpen(participantPanel?.hidden ?? true);
+});
+
+participantClose?.addEventListener("click", () => setParticipantPanelOpen(false));
+
+document.addEventListener("click", (e) => {
+    if (!participantPanel || participantPanel.hidden) return;
+    const target = e.target;
+    if (!(target instanceof Node)) return;
+    if (participantPanel.contains(target) || participantToggle?.contains(target)) return;
+    setParticipantPanelOpen(false);
+});
+
+document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") {
+        setParticipantPanelOpen(false);
+    }
+});
 
 buildSidebar();
 buildHeaderWords();
@@ -315,7 +347,27 @@ connection.on("UpdateCounters", (state) => {
 });
 
 connection.on("UpdateParticipants", (count) => {
-    document.getElementById("participant-count").textContent = count;
+    if (participantCountEl) participantCountEl.textContent = count;
+});
+
+connection.on("UpdateParticipantList", (participants) => {
+    if (!participantList) return;
+    participantList.innerHTML = "";
+
+    if (!participants || participants.length === 0) {
+        const emptyItem = document.createElement("li");
+        emptyItem.className = "participant-list-empty";
+        emptyItem.textContent = "Ingen är ansluten just nu";
+        participantList.appendChild(emptyItem);
+        return;
+    }
+
+    participants.forEach((name) => {
+        const item = document.createElement("li");
+        item.className = "participant-list-item";
+        item.textContent = name;
+        participantList.appendChild(item);
+    });
 });
 
 // UserJoined-event är inaktiverad
