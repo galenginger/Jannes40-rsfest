@@ -52,14 +52,253 @@ function generateAvatar(username, size, avatarId) {
     const mouthStyle = h2 % 9;  // 0=leende, 1=grin, 2=smirk, 3=förvånad, 4=rak smile, 5=tunga, 6=flin, 7=sur, 8=biten läpp
     const robotMouthStyle = h3 % 3;
     const hasBlush   = (h5 % 3) === 0;
-    const hasFeminineTouch = !isRobot && (h5 % 4 === 0 || h4 % 7 === 0);
-    const hasLashes = hasFeminineTouch && (h1 % 2 === 0);
-    const hasLipGloss = hasFeminineTouch && (h3 % 2 === 1);
+    const feminineStyle = h2 % 12;
+    const isFeminineBranch = !isRobot && !isAlien && (feminineStyle === 0 || feminineStyle === 5 || feminineStyle === 9);
     const accessory  = h4 % 8;  // 0=inget, 1=glasögon, 2=festhatt, 3=rosett, 4=mustasch, 5=örhängen, 6=krona, 7=inget
+    const costumeStyle = h0 % 12; // 0=none, 1=bandit, 2=pirat, 3=ninja, 4=viking, 5=tjuvluva, övriga=none
+    const artStyle = h3 % 14; // 0=surrealistisk, 1=impressionistisk, övriga=none
+    const isSurreal = !isRobot && !isAlien && artStyle === 0;
+    const isImpressionist = !isRobot && !isAlien && artStyle === 1;
     const browColor  = isRobot ? '#51606d' : isAlien ? '#274e13' : '#3d2b1f';
     const eyeY       = 52;
 
     const p = [];
+
+    if (isSurreal) {
+        const c1 = bgPalette[(h0 + 2) % bgPalette.length];
+        const c2 = bgPalette[(h1 + 5) % bgPalette.length];
+        const c3 = bgPalette[(h2 + 8) % bgPalette.length];
+        const c4 = bgPalette[(h3 + 11) % bgPalette.length];
+        const surrealVariant = h4 % 3;
+
+        if (surrealVariant === 0) {
+            // Picasso-variant 1: diagonal split + svävande öga
+            p.push(`<polygon points="18,56 48,20 52,20 42,58" fill="${c1}" opacity="0.5"/>`);
+            p.push(`<polygon points="52,20 82,56 58,58" fill="${c2}" opacity="0.45"/>`);
+
+            p.push(`<path d="M18,58 Q28,26 50,22 Q72,26 82,58 Q77,87 50,90 Q23,87 18,58 Z" fill="${skin}"/>`);
+            p.push(`<path d="M50,22 L58,58 L50,90 L42,58 Z" fill="rgba(255,255,255,0.24)"/>`);
+
+            p.push(`<ellipse cx="34" cy="50" rx="9" ry="6" fill="white" opacity="0.95"/>`);
+            p.push(`<circle cx="34" cy="50" r="3.2" fill="#111"/>`);
+            p.push(`<ellipse cx="66" cy="47" rx="6" ry="11" fill="#121212"/>`);
+            p.push(`<ellipse cx="67" cy="43" rx="1.5" ry="2.5" fill="rgba(255,255,255,0.7)"/>`);
+
+            p.push(`<path d="M46,68 Q53,61 61,67" stroke="#6c3b2a" stroke-width="2.6" fill="none" stroke-linecap="round"/>`);
+            p.push(`<path d="M34,80 Q50,73 66,82" stroke="#8e4b2a" stroke-width="2.4" fill="none" stroke-linecap="round"/>`);
+
+            p.push(`<ellipse cx="50" cy="15" rx="12" ry="5.5" fill="rgba(255,255,255,0.38)"/>`);
+            p.push(`<ellipse cx="50" cy="15" rx="8" ry="3.8" fill="${c3}" opacity="0.9"/>`);
+            p.push(`<circle cx="50" cy="15" r="2.4" fill="#111"/>`);
+            p.push(`<line x1="50" y1="20" x2="50" y2="29" stroke="rgba(255,255,255,0.5)" stroke-width="1.3"/>`);
+        } else if (surrealVariant === 1) {
+            // Picasso-variant 2: kubistiska block och feljusterade drag
+            p.push(`<path d="M18,60 Q26,28 50,22 Q74,28 82,60 Q76,86 50,90 Q24,86 18,60 Z" fill="${skin}"/>`);
+            p.push(`<rect x="26" y="30" width="22" height="20" fill="${c1}" opacity="0.42" transform="rotate(-12 37 40)"/>`);
+            p.push(`<rect x="52" y="40" width="20" height="22" fill="${c2}" opacity="0.4" transform="rotate(9 62 51)"/>`);
+            p.push(`<polygon points="44,22 58,24 52,40 40,36" fill="${c4}" opacity="0.45"/>`);
+
+            p.push(`<ellipse cx="32" cy="53" rx="7" ry="10" fill="white"/>`);
+            p.push(`<circle cx="32" cy="53" r="3" fill="#111"/>`);
+            p.push(`<rect x="58" y="46" width="12" height="9" rx="1" fill="#121212"/>`);
+            p.push(`<circle cx="63" cy="50" r="1.2" fill="white" opacity="0.75"/>`);
+
+            p.push(`<path d="M48,64 L56,70 L48,77" stroke="#7d4a31" stroke-width="2.2" fill="none"/>`);
+            p.push(`<path d="M32,80 Q47,68 68,79" stroke="#8e4b2a" stroke-width="2.6" fill="none" stroke-linecap="round"/>`);
+
+            p.push(`<line x1="22" y1="38" x2="78" y2="30" stroke="${c3}" stroke-width="2.5" opacity="0.55"/>`);
+            p.push(`<line x1="24" y1="70" x2="76" y2="86" stroke="${c2}" stroke-width="2.5" opacity="0.5"/>`);
+        } else {
+            // Picasso-variant 3: sidoprofil möter front, stark asymmetri
+            p.push(`<path d="M18,60 Q26,26 50,22 Q74,26 82,60 Q77,86 50,90 Q23,86 18,60 Z" fill="${skin}"/>`);
+            p.push(`<path d="M50,22 Q66,40 61,71 Q58,83 50,90 Z" fill="${c1}" opacity="0.35"/>`);
+            p.push(`<path d="M50,22 Q36,36 40,70 Q42,83 50,90 Z" fill="${c2}" opacity="0.32"/>`);
+
+            p.push(`<ellipse cx="36" cy="49" rx="8" ry="6" fill="white"/>`);
+            p.push(`<circle cx="36" cy="49" r="3.2" fill="#111"/>`);
+            p.push(`<path d="M58,40 Q68,44 68,54 Q68,63 58,67" stroke="#151515" stroke-width="3" fill="none"/>`);
+
+            p.push(`<path d="M50,58 Q61,64 58,75" stroke="#7a4a2c" stroke-width="2.3" fill="none"/>`);
+            p.push(`<path d="M34,79 Q50,86 68,76" stroke="#8e4b2a" stroke-width="2.7" fill="none" stroke-linecap="round"/>`);
+
+            p.push(`<circle cx="50" cy="14" r="7" fill="${c3}" opacity="0.65"/>`);
+            p.push(`<circle cx="50" cy="14" r="2" fill="#111"/>`);
+            p.push(`<path d="M29,29 Q40,22 52,28" stroke="${c4}" stroke-width="3.2" fill="none" stroke-linecap="round"/>`);
+            p.push(`<path d="M53,30 Q66,24 75,33" stroke="${c1}" stroke-width="3.2" fill="none" stroke-linecap="round"/>`);
+        }
+
+        const svgSurreal = `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 100 100">${p.join('')}</svg>`;
+        return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svgSurreal);
+    }
+
+    if (isImpressionist) {
+        const c1 = bgPalette[(h0 + 3) % bgPalette.length];
+        const c2 = bgPalette[(h1 + 7) % bgPalette.length];
+        const c3 = bgPalette[(h2 + 10) % bgPalette.length];
+        const c4 = bgPalette[(h4 + 1) % bgPalette.length];
+
+        // Impressionistisk helstil: ansiktet byggs av penseldrag och färgfält.
+        p.push(`<path d="M20,60 Q28,28 50,24 Q72,28 80,60 Q75,84 50,89 Q25,84 20,60 Z" fill="${skin}" opacity="0.65"/>`);
+
+        p.push(`<path d="M22,60 Q35,30 54,31" stroke="${c1}" stroke-width="8" stroke-linecap="round" opacity="0.35" fill="none"/>`);
+        p.push(`<path d="M44,29 Q63,30 77,58" stroke="${c2}" stroke-width="8" stroke-linecap="round" opacity="0.35" fill="none"/>`);
+        p.push(`<path d="M27,74 Q49,66 73,76" stroke="${c3}" stroke-width="7" stroke-linecap="round" opacity="0.33" fill="none"/>`);
+
+        p.push(`<ellipse cx="35" cy="51" rx="8" ry="6" fill="white" opacity="0.85"/>`);
+        p.push(`<ellipse cx="65" cy="53" rx="8" ry="6" fill="white" opacity="0.85"/>`);
+        p.push(`<circle cx="35" cy="51" r="3.2" fill="${irisColor}"/>`);
+        p.push(`<circle cx="65" cy="53" r="3.2" fill="${irisColor}"/>`);
+        p.push(`<circle cx="36.4" cy="49.8" r="1.1" fill="white" opacity="0.85"/>`);
+        p.push(`<circle cx="66.4" cy="51.8" r="1.1" fill="white" opacity="0.85"/>`);
+
+        p.push(`<path d="M38,78 Q51,85 64,76" stroke="#8e4b2a" stroke-width="2.8" fill="none" stroke-linecap="round"/>`);
+
+        p.push(`<path d="M24,34 Q35,22 47,30" stroke="${hair}" stroke-width="7" stroke-linecap="round" fill="none" opacity="0.75"/>`);
+        p.push(`<path d="M53,30 Q67,20 76,36" stroke="${c4}" stroke-width="7" stroke-linecap="round" fill="none" opacity="0.72"/>`);
+
+        p.push(`<circle cx="29" cy="44" r="2.2" fill="${c1}" opacity="0.45"/>`);
+        p.push(`<circle cx="71" cy="64" r="2.2" fill="${c2}" opacity="0.45"/>`);
+        p.push(`<circle cx="49" cy="83" r="1.8" fill="${c3}" opacity="0.45"/>`);
+
+        const svgImpressionist = `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 100 100">${p.join('')}</svg>`;
+        return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svgImpressionist);
+    }
+
+    if (isFeminineBranch) {
+        const f = [];
+        const face = skinTones[h1 % skinTones.length];
+        const hairFemale = hairColors[(h2 + 3) % hairColors.length];
+        const eyeFemale = ['#3a2a4d', '#1a3a5c', '#0d6e6e', '#6d4c41'][h3 % 4];
+        const lipstick = ['#c95f78', '#d64f7f', '#b94a6b', '#a93f5e'][h4 % 4];
+        const femVariant = h1 % 4;
+
+        // Helgren för kvinnliga varianter: frisyr + ansiktsdrag byggs som egen komposition.
+        f.push(`<circle cx="15" cy="58" r="9" fill="${face}"/>`);
+        f.push(`<circle cx="85" cy="58" r="9" fill="${face}"/>`);
+
+        if (femVariant === 0) {
+            // Mjuk bob med lugg
+            f.push(`<rect x="20" y="20" width="60" height="48" rx="16" fill="${hairFemale}"/>`);
+            f.push(`<path d="M23,34 Q35,26 50,30 Q65,26 77,34" stroke="${hairFemale}" stroke-width="9" fill="none" stroke-linecap="round"/>`);
+        } else if (femVariant === 1) {
+            // Hög hästsvans
+            f.push(`<ellipse cx="50" cy="26" rx="26" ry="14" fill="${hairFemale}"/>`);
+            f.push(`<ellipse cx="78" cy="33" rx="9" ry="17" fill="${hairFemale}"/>`);
+            f.push(`<rect x="64" y="25" width="8" height="7" rx="2" fill="${bgPalette[(h0 + 4) % bgPalette.length]}"/>`);
+        } else if (femVariant === 2) {
+            // Vågor
+            f.push(`<rect x="20" y="20" width="60" height="68" rx="12" fill="${hairFemale}"/>`);
+            f.push(`<path d="M24,31 Q31,39 24,47 Q31,55 24,63" stroke="rgba(255,255,255,0.25)" stroke-width="2" fill="none"/>`);
+            f.push(`<path d="M76,31 Q69,39 76,47 Q69,55 76,63" stroke="rgba(255,255,255,0.25)" stroke-width="2" fill="none"/>`);
+        } else {
+            // Flätor
+            f.push(`<ellipse cx="50" cy="25" rx="30" ry="15" fill="${hairFemale}"/>`);
+            f.push(`<path d="M24,36 Q19,50 23,67" stroke="${hairFemale}" stroke-width="8" fill="none" stroke-linecap="round"/>`);
+            f.push(`<path d="M76,36 Q81,50 77,67" stroke="${hairFemale}" stroke-width="8" fill="none" stroke-linecap="round"/>`);
+        }
+
+        f.push(`<circle cx="50" cy="58" r="37" fill="${face}"/>`);
+        f.push(`<circle cx="28" cy="66" r="7" fill="#ff9999" opacity="0.42"/>`);
+        f.push(`<circle cx="72" cy="66" r="7" fill="#ff9999" opacity="0.42"/>`);
+
+        f.push(`<path d="M27,45 L24,43 M35,43 L35,40 M43,45 L46,43" stroke="#2f1f1f" stroke-width="1.2" stroke-linecap="round"/>`);
+        f.push(`<path d="M57,45 L54,43 M65,43 L65,40 M73,45 L76,43" stroke="#2f1f1f" stroke-width="1.2" stroke-linecap="round"/>`);
+
+        f.push(`<ellipse cx="35" cy="52" rx="7" ry="5.5" fill="white"/>`);
+        f.push(`<ellipse cx="65" cy="52" rx="7" ry="5.5" fill="white"/>`);
+        f.push(`<circle cx="35" cy="52" r="3.3" fill="${eyeFemale}"/>`);
+        f.push(`<circle cx="65" cy="52" r="3.3" fill="${eyeFemale}"/>`);
+        f.push(`<circle cx="36.2" cy="50.8" r="1.1" fill="white" opacity="0.9"/>`);
+        f.push(`<circle cx="66.2" cy="50.8" r="1.1" fill="white" opacity="0.9"/>`);
+
+        f.push(`<circle cx="50" cy="64" r="2" fill="rgba(0,0,0,0.13)"/>`);
+        f.push(`<path d="M37,76 Q50,85 63,76" stroke="#8e4b2a" stroke-width="2.3" fill="none" stroke-linecap="round"/>`);
+        f.push(`<path d="M39,75 Q50,82 61,75" fill="${lipstick}" opacity="0.72"/>`);
+        f.push(`<ellipse cx="50" cy="75" rx="8" ry="2" fill="rgba(255,255,255,0.32)"/>`);
+
+        // Diskreta accessoarer i denna gren
+        if ((h4 % 3) === 0) {
+            const clip = bgPalette[(h4 + 5) % bgPalette.length];
+            f.push(`<circle cx="71" cy="34" r="3" fill="${clip}"/>`);
+            f.push(`<circle cx="67" cy="34" r="2.2" fill="${clip}" opacity="0.9"/>`);
+            f.push(`<circle cx="75" cy="34" r="2.2" fill="${clip}" opacity="0.9"/>`);
+            f.push(`<circle cx="71" cy="30" r="2.2" fill="${clip}" opacity="0.9"/>`);
+            f.push(`<circle cx="71" cy="38" r="2.2" fill="${clip}" opacity="0.9"/>`);
+            f.push(`<circle cx="71" cy="34" r="1.1" fill="white"/>`);
+        } else {
+            f.push(`<circle cx="15" cy="66" r="2.8" fill="#ffd166"/>`);
+            f.push(`<circle cx="85" cy="66" r="2.8" fill="#ffd166"/>`);
+        }
+
+        const svgFeminine = `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 100 100">${f.join('')}</svg>`;
+        return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svgFeminine);
+    }
+
+    if (!isRobot && !isAlien && costumeStyle >= 1 && costumeStyle <= 5) {
+        const c = [];
+        const face = skinTones[h1 % skinTones.length];
+        const eye = ['#2d3436','#1a3a5c','#0d6e6e','#4a0080','#6d4c41','#1e6b3a'][h3 % 6];
+        const bandColor = bgPalette[(h4 + 1) % bgPalette.length];
+
+        // Grundansikte och öron
+        c.push(`<circle cx="15" cy="58" r="9" fill="${face}"/>`);
+        c.push(`<circle cx="85" cy="58" r="9" fill="${face}"/>`);
+        c.push(`<circle cx="50" cy="58" r="37" fill="${face}"/>`);
+
+        if (costumeStyle === 1) {
+            // Bandit
+            c.push(`<path d="M20,28 Q50,18 80,28 L80,40 L20,40 Z" fill="#3a2c1f"/>`);
+            c.push(`<rect x="22" y="44" width="56" height="16" rx="8" fill="#171717"/>`);
+            c.push(`<ellipse cx="35" cy="52" rx="6" ry="4.5" fill="#f6f6f6"/>`);
+            c.push(`<ellipse cx="65" cy="52" rx="6" ry="4.5" fill="#f6f6f6"/>`);
+            c.push(`<circle cx="35" cy="52" r="2.8" fill="${eye}"/>`);
+            c.push(`<circle cx="65" cy="52" r="2.8" fill="${eye}"/>`);
+            c.push(`<path d="M37,78 Q50,85 63,78" stroke="#7a4a2c" stroke-width="2.8" fill="none" stroke-linecap="round"/>`);
+        } else if (costumeStyle === 2) {
+            // Pirat
+            c.push(`<path d="M20,30 Q50,14 80,30 L80,42 L20,42 Z" fill="${bandColor}"/>`);
+            c.push(`<line x1="30" y1="47" x2="42" y2="49" stroke="#222" stroke-width="2"/>`);
+            c.push(`<circle cx="35" cy="52" r="7" fill="#171717"/>`);
+            c.push(`<ellipse cx="65" cy="52" rx="6" ry="5" fill="white"/>`);
+            c.push(`<circle cx="65" cy="52" r="2.8" fill="${eye}"/>`);
+            c.push(`<circle cx="65.9" cy="50.8" r="1" fill="white" opacity="0.9"/>`);
+            c.push(`<path d="M37,78 Q50,86 64,77" stroke="#8e4b2a" stroke-width="2.8" fill="none" stroke-linecap="round"/>`);
+            c.push(`<circle cx="86" cy="66" r="3" fill="#ffd166"/>`);
+        } else if (costumeStyle === 3) {
+            // Ninja
+            c.push(`<path d="M20,36 L80,36 L80,43 L20,43 Z" fill="${bandColor}"/>`);
+            c.push(`<path d="M80,39 L90,33 L84,44 Z" fill="${bandColor}"/>`);
+            c.push(`<ellipse cx="35" cy="52" rx="6" ry="4.5" fill="white"/>`);
+            c.push(`<ellipse cx="65" cy="52" rx="6" ry="4.5" fill="white"/>`);
+            c.push(`<circle cx="35" cy="52" r="2.8" fill="${eye}"/>`);
+            c.push(`<circle cx="65" cy="52" r="2.8" fill="${eye}"/>`);
+            c.push(`<path d="M22,67 Q50,58 78,67 L78,84 Q50,90 22,84 Z" fill="#18181d"/>`);
+            c.push(`<line x1="44" y1="75" x2="56" y2="75" stroke="#5f6770" stroke-width="1.4"/>`);
+        } else if (costumeStyle === 4) {
+            // Viking
+            c.push(`<path d="M26,35 Q50,17 74,35 L74,45 L26,45 Z" fill="#95a3b1"/>`);
+            c.push(`<path d="M29,34 Q20,24 13,30 Q19,33 26,37" fill="#efe6cf" stroke="#b8ad95" stroke-width="1"/>`);
+            c.push(`<path d="M71,34 Q80,24 87,30 Q81,33 74,37" fill="#efe6cf" stroke="#b8ad95" stroke-width="1"/>`);
+            c.push(`<ellipse cx="35" cy="52" rx="6" ry="5" fill="white"/>`);
+            c.push(`<ellipse cx="65" cy="52" rx="6" ry="5" fill="white"/>`);
+            c.push(`<circle cx="35" cy="52" r="2.8" fill="${eye}"/>`);
+            c.push(`<circle cx="65" cy="52" r="2.8" fill="${eye}"/>`);
+            c.push(`<path d="M37,78 Q50,84 63,78" stroke="#8e4b2a" stroke-width="2.8" fill="none" stroke-linecap="round"/>`);
+            c.push(`<path d="M34,80 Q50,91 66,80" stroke="#d6a24f" stroke-width="2" fill="none" stroke-linecap="round" opacity="0.85"/>`);
+        } else {
+            // Tjuvluva / cowl
+            c.push(`<path d="M18,78 Q20,26 50,18 Q80,26 82,78 Q75,86 50,88 Q25,86 18,78 Z" fill="#222"/>`);
+            c.push(`<ellipse cx="50" cy="58" rx="25" ry="30" fill="${face}"/>`);
+            c.push(`<ellipse cx="35" cy="52" rx="6" ry="5" fill="white"/>`);
+            c.push(`<ellipse cx="65" cy="52" rx="6" ry="5" fill="white"/>`);
+            c.push(`<circle cx="35" cy="52" r="2.8" fill="${eye}"/>`);
+            c.push(`<circle cx="65" cy="52" r="2.8" fill="${eye}"/>`);
+            c.push(`<path d="M38,78 Q50,84 62,78" stroke="#8e4b2a" stroke-width="2.6" fill="none" stroke-linecap="round"/>`);
+        }
+
+        const svgCostume = `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 100 100">${c.join('')}</svg>`;
+        return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svgCostume);
+    }
 
     // Ingen fast bakgrund: avataren blir transparent runt ansiktet.
 
@@ -272,12 +511,6 @@ function generateAvatar(username, size, avatarId) {
         p.push(`<circle cx="65" cy="52" r="1.2" fill="white"/>`);
     }
 
-    if (!isRobot && hasLashes) {
-        // Diskreta fransar/eyeliner
-        p.push(`<path d="M27,45 L24,43 M35,43 L35,40 M43,45 L46,43" stroke="#2f1f1f" stroke-width="1.2" stroke-linecap="round"/>`);
-        p.push(`<path d="M57,45 L54,43 M65,43 L65,40 M73,45 L76,43" stroke="#2f1f1f" stroke-width="1.2" stroke-linecap="round"/>`);
-    }
-
     // ── Näsa ─────────────────────────────────────────────────────────────
     if (isRobot) {
         p.push(`<rect x="47" y="62" width="6" height="5" rx="1" fill="#6d7a86"/>`);
@@ -338,10 +571,6 @@ function generateAvatar(username, size, avatarId) {
         p.push(`<rect x="44" y="72" width="12" height="3" rx="1.5" fill="white" opacity="0.8"/>`);
     }
 
-    if (!isRobot && hasLipGloss) {
-        p.push(`<ellipse cx="50" cy="75" rx="8" ry="2.1" fill="rgba(255,255,255,0.32)"/>`);
-    }
-
     // ── Tillbehör ─────────────────────────────────────────────────────────
     if (isRobot) {
         // Robot-detaljer
@@ -396,15 +625,6 @@ function generateAvatar(username, size, avatarId) {
         p.push(`<circle cx="34" cy="12" r="2" fill="#fff4c2"/>`);
         p.push(`<circle cx="50" cy="9" r="2.2" fill="#fff4c2"/>`);
         p.push(`<circle cx="66" cy="12" r="2" fill="#fff4c2"/>`);
-    } else if (hasFeminineTouch && accessory === 7) {
-        // Liten hårspänne-blomma
-        const clip = bgPalette[(h4 + 5) % bgPalette.length];
-        p.push(`<circle cx="71" cy="34" r="3" fill="${clip}"/>`);
-        p.push(`<circle cx="67" cy="34" r="2.2" fill="${clip}" opacity="0.9"/>`);
-        p.push(`<circle cx="75" cy="34" r="2.2" fill="${clip}" opacity="0.9"/>`);
-        p.push(`<circle cx="71" cy="30" r="2.2" fill="${clip}" opacity="0.9"/>`);
-        p.push(`<circle cx="71" cy="38" r="2.2" fill="${clip}" opacity="0.9"/>`);
-        p.push(`<circle cx="71" cy="34" r="1.1" fill="white"/>`);
     }
 
     const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 100 100">${p.join('')}</svg>`;
