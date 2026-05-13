@@ -1,96 +1,101 @@
+using DanneFest.Data;
 using DanneFest.Models;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using System.Text.Json;
 
 namespace DanneFest.Services;
 
 public class MessageHistoryService
 {
-    private const int MaxMessages = 200;
-    private readonly List<MessageRecord> _messages = new();
-    private readonly object _lock = new();
+    private readonly ChatDbContext _dbContext;
     private readonly ILogger<MessageHistoryService> _logger;
-    private readonly JsonSerializerOptions _jsonOptions = new() { WriteIndented = true };
-    private readonly string _stateDirectory;
-    private readonly string _stateFilePath;
 
-    public MessageHistoryService(IWebHostEnvironment env, ILogger<MessageHistoryService> logger)
+    public MessageHistoryService(ChatDbContext dbContext, ILogger<MessageHistoryService> logger)
     {
+        _dbContext = dbContext;
         _logger = logger;
-        _stateDirectory = Path.Combine(env.ContentRootPath, "App_Data", "runtime-state");
-        _stateFilePath = Path.Combine(_stateDirectory, "message-history.json");
-        LoadPersistedHistory();
     }
 
+    /// <summary>
+    /// Lägger till ett nytt meddelande i databasen
+    /// </summary>
     public void Add(MessageRecord record)
     {
-        List<MessageRecord> snapshot;
-
-        lock (_lock)
+        try
         {
-            _messages.Add(record);
-            if (_messages.Count > MaxMessages)
-                _messages.RemoveAt(0);
+            var message = new Message
+            {
+                Username = record.Username,
+                AvatarId = record.AvatarId,
+                Text = record.Text,
+                IsHighlighted = record.IsHighlighted,
+                IsAnnouncement = record.IsAnnouncement,
+                Timestamp = record.Timestamp
+            };
 
-            snapshot = _messages.ToList();
+            _dbContext.Messages.Add(message);
+            _dbContext.SaveChanges();
         }
-
-        PersistHistory(snapshot);
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to save message to database.");
+        }
     }
 
+    /// <summary>
+    /// Hämtar meddelanden som skickades efter given tid
+    /// </summary>
     public List<MessageRecord> GetMessagesSince(DateTime since)
     {
-        lock (_lock)
-        {
-            return _messages.Where(m => m.Timestamp > since).ToList();
-        }
-    }
-
-    private void LoadPersistedHistory()
-    {
         try
         {
-            if (!File.Exists(_stateFilePath))
-            {
-                return;
-            }
-
-            var json = File.ReadAllText(_stateFilePath);
-            var persisted = JsonSerializer.Deserialize<List<MessageRecord>>(json) ?? new List<MessageRecord>();
-
-            lock (_lock)
-            {
-                _messages.Clear();
-
-                if (persisted.Count > MaxMessages)
+            return _dbContext.Messages
+                .Where(m => m.Timestamp > since)
+                .OrderBy(m => m.Timestamp)
+                .Select(m => new MessageRecord
                 {
-                    persisted = persisted.Skip(Math.Max(0, persisted.Count - MaxMessages)).ToList();
-                }
-
-                _messages.AddRange(persisted);
-            }
-
-            _logger.LogInformation("Loaded persisted chat history: {MessageCount} messages.", _messages.Count);
+                    Username = m.Username,
+                    AvatarId = m.AvatarId,
+                    Text = m.Text,
+                    IsHighlighted = m.IsHighlighted,
+                    IsAnnouncement = m.IsAnnouncement,
+                    Timestamp = m.Timestamp
+                })
+                .ToList();
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Failed to load persisted chat history. Starting with empty history.");
+            _logger.LogError(ex, "Failed to fetch messages since {Since}.", since);
+            return new List<MessageRecord>();
         }
     }
 
-    private void PersistHistory(List<MessageRecord> snapshot)
+    /// <summary>
+    /// Hämtar de senaste N meddelanden från databasen (för initial load)
+    /// </summary>
+    public List<MessageRecord> GetLatestMessages(int count = 100)
     {
         try
         {
-            Directory.CreateDirectory(_stateDirectory);
-            var tempFile = _stateFilePath + ".tmp";
-            var json = JsonSerializer.Serialize(snapshot, _jsonOptions);
-            File.WriteAllText(tempFile, json);
-            File.Move(tempFile, _stateFilePath, true);
+            return _dbContext.Messages
+                .OrderByDescending(m => m.Timestamp)
+                .Take(count)
+                .OrderBy(m => m.Timestamp)
+                .Select(m => new MessageRecord
+                {
+                    Username = m.Username,
+                    AvatarId = m.AvatarId,
+                    Text = m.Text,
+                    IsHighlighted = m.IsHighlighted,
+                    IsAnnouncement = m.IsAnnouncement,
+                    Timestamp = m.Timestamp
+                })
+                .ToList();
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Failed to persist chat history to disk.");
+            _logger.LogError(ex, "Failed to fetch latest messages.");
+            return new List<MessageRecord>();
         }
     }
 }

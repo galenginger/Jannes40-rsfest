@@ -1,6 +1,8 @@
+using DanneFest.Data;
 using DanneFest.Hubs;
 using DanneFest.Services;
 using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.EntityFrameworkCore;
 
 string? cliPassword = null;
 
@@ -48,10 +50,23 @@ builder.Services.AddSession(options =>
     options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
 });
 
+// Registrera Entity Framework med SQLite
+var connectionString = $"Data Source=chat.db";
+builder.Services.AddDbContext<ChatDbContext>(options =>
+    options.UseSqlite(connectionString)
+);
+
 builder.Services.AddSingleton<TriggerService>();
-builder.Services.AddSingleton<MessageHistoryService>();
+builder.Services.AddScoped<MessageHistoryService>();
 
 var app = builder.Build();
+
+// Migrera databasen vid startup
+using (var scope = app.Services.CreateScope())
+{
+    var dbContext = scope.ServiceProvider.GetRequiredService<ChatDbContext>();
+    dbContext.Database.Migrate();
+}
 
 app.UseForwardedHeaders();
 

@@ -1,4 +1,5 @@
 using System.Text.Json;
+using DanneFest.Data;
 using DanneFest.Models;
 using Microsoft.Extensions.Logging;
 
@@ -15,6 +16,7 @@ public class TriggerService
 
     private readonly IWebHostEnvironment _env;
     private readonly ILogger<TriggerService> _logger;
+    private readonly IServiceProvider _serviceProvider;
     private readonly JsonSerializerOptions _jsonOptions = new() { WriteIndented = true };
     private readonly string _stateDirectory;
     private readonly string _stateFilePath;
@@ -24,10 +26,11 @@ public class TriggerService
     private readonly HashSet<string> _unlockedWords = new(StringComparer.OrdinalIgnoreCase);
     private readonly HashSet<string> _unlockedCombos = new();
 
-    public TriggerService(IWebHostEnvironment env, ILogger<TriggerService> logger)
+    public TriggerService(IWebHostEnvironment env, ILogger<TriggerService> logger, IServiceProvider serviceProvider)
     {
         _env = env;
         _logger = logger;
+        _serviceProvider = serviceProvider;
         _stateDirectory = Path.Combine(_env.ContentRootPath, "App_Data", "runtime-state");
         _stateFilePath = Path.Combine(_stateDirectory, "trigger-state.json");
     }
@@ -142,41 +145,43 @@ public class TriggerService
     {
         try
         {
-            if (!File.Exists(_stateFilePath))
-            {
-                return;
-            }
+            // Skapa en scope för att ladda från databasen
+            using var scope = _serviceProvider.CreateScope();
+            var dbContext = scope.ServiceProvider.GetRequiredService<ChatDbContext>();
 
-            var json = File.ReadAllText(_stateFilePath);
-            var persisted = JsonSerializer.Deserialize<PersistedTriggerState>(json);
-            if (persisted is null)
-            {
-                return;
-            }
+            var unlockedWords = dbContext.UnlockedTriggers
+                .Where(ut => ut.Type == "word")
+                .Select(ut => ut.TriggerValue)
+                .ToList();
+
+            var unlockedCombos = dbContext.UnlockedTriggers
+                .Where(ut => ut.Type == "combo")
+                .Select(ut => ut.TriggerValue)
+                .ToList();
 
             lock (_lock)
             {
                 _unlockedWords.Clear();
                 _unlockedCombos.Clear();
 
-                foreach (var word in persisted.UnlockedWords.Where(w => !string.IsNullOrWhiteSpace(w)))
+                foreach (var word in unlockedWords.Where(w => !string.IsNullOrWhiteSpace(w)))
                 {
                     _unlockedWords.Add(word.ToLowerInvariant());
                 }
 
-                foreach (var combo in persisted.UnlockedCombos.Where(c => !string.IsNullOrWhiteSpace(c)))
+                foreach (var combo in unlockedCombos.Where(c => !string.IsNullOrWhiteSpace(c)))
                 {
                     _unlockedCombos.Add(combo);
                 }
             }
 
-            _logger.LogInformation("Loaded persisted trigger state: {WordCount} words, {ComboCount} combos.",
+            _logger.LogInformation("Loaded trigger state from database: {WordCount} words, {ComboCount} combos.",
                 UnlockedWordCount,
                 UnlockedComboCount);
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Failed to load persisted trigger state. Starting with empty unlock state.");
+            _logger.LogWarning(ex, "Failed to load trigger state from database. Starting with empty unlock state.");
         }
     }
 
@@ -195,15 +200,43 @@ public class TriggerService
 
         try
         {
-            Directory.CreateDirectory(_stateDirectory);
-            var tempFile = _stateFilePath + ".tmp";
-            var json = JsonSerializer.Serialize(snapshot, _jsonOptions);
-            File.WriteAllText(tempFile, json);
-            File.Move(tempFile, _stateFilePath, true);
+            // Skapa en scope för att spara till databasen
+            using var scope = _serviceProvider.CreateScope();
+            var dbContext = scope.ServiceProvider.GetRequiredService<ChatDbContext>();
+
+            // Spara nya order
+            foreach (var word in snapshot.UnlockedWords)
+            {
+                if (!dbContext.UnlockedTriggers.Any(ut => ut.Type == "word" && ut.TriggerValue == word))
+                {
+                    dbContext.UnlockedTriggers.Add(new UnlockedTrigger
+                    {
+                        Type = "word",
+                        TriggerValue = word,
+                        UnlockedAt = DateTime.UtcNow
+                    });
+                }
+            }
+
+            // Spara nya combos
+            foreach (var combo in snapshot.UnlockedCombos)
+            {
+                if (!dbContext.UnlockedTriggers.Any(ut => ut.Type == "combo" && ut.TriggerValue == combo))
+                {
+                    dbContext.UnlockedTriggers.Add(new UnlockedTrigger
+                    {
+                        Type = "combo",
+                        TriggerValue = combo,
+                        UnlockedAt = DateTime.UtcNow
+                    });
+                }
+            }
+
+            dbContext.SaveChanges();
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Failed to persist trigger state to disk.");
+            _logger.LogWarning(ex, "Failed to persist trigger state to database.");
         }
     }
 }
