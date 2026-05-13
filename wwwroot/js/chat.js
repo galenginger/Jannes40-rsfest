@@ -250,13 +250,11 @@ async function loadHistory(sinceDate) {
             sep.className = "history-separator";
             sep.textContent = `— ${history.length} meddelande${history.length > 1 ? "n" : ""} från tidigare —`;
             messagesInner.insertBefore(sep, messagesInner.firstChild);
-            history.reverse();
+
+            // Historiken kommer i kronologisk ordning från servern.
+            // Rendera i samma ordning så nyaste hamnar längst ner, precis som live-meddelanden.
             history.forEach(msg => {
-                const temp = messagesInner.firstChild;
                 addMessage(msg.username, msg.text, msg.isHighlighted, msg.timestamp);
-                if (messagesInner.firstChild !== temp) {
-                    messagesInner.insertBefore(messagesInner.lastChild, temp);
-                }
             });
         }
     } catch (err) {
