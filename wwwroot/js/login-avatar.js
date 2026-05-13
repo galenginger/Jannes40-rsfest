@@ -3,10 +3,10 @@
 (function initLoginAvatarChooser() {
     const usernameInput = document.getElementById("username");
     const previewImg = document.getElementById("login-avatar-preview");
-    const rerollBtn = document.getElementById("reroll-avatar-btn");
+    const avatarBtn = document.getElementById("login-avatar-btn");
     const avatarIdInput = document.getElementById("avatar-id");
 
-    if (!usernameInput || !previewImg || !rerollBtn || !avatarIdInput || typeof generateAvatar !== "function") {
+    if (!usernameInput || !previewImg || !avatarBtn || !avatarIdInput || typeof generateAvatar !== "function") {
         return;
     }
 
@@ -62,7 +62,7 @@
         previewImg.src = generateAvatar(currentName, 96, avatarId);
     }
 
-    rerollBtn.addEventListener("click", () => {
+    avatarBtn.addEventListener("click", () => {
         const key = normalizeName(usernameInput.value);
         if (!key) {
             renderPreview();

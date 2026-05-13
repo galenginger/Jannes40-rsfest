@@ -98,39 +98,52 @@ html, body {
     margin-top: 0.2rem;
 }
 
-.avatar-login-preview-wrap {
+.username-avatar-row {
     display: flex;
     align-items: center;
-    gap: 0.9rem;
-    padding: 0.7rem;
+    gap: 0.65rem;
+}
+
+.username-avatar-row .form-input {
+    flex: 1;
+}
+
+.login-avatar-btn {
+    width: 52px;
+    height: 52px;
+    padding: 0;
     border: 1px solid var(--border);
-    border-radius: 10px;
+    border-radius: 8px;
     background: var(--bg-input);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: border-color 0.2s, transform 0.1s, background 0.2s;
+}
+
+.login-avatar-btn:hover {
+    border-color: var(--accent);
+    background: rgba(247, 183, 49, 0.08);
+}
+
+.login-avatar-btn:active {
+    transform: scale(0.96);
 }
 
 .login-avatar-preview {
-    width: 72px;
-    height: 72px;
+    width: 44px;
+    height: 44px;
     border-radius: 0;
     border: none;
     flex-shrink: 0;
     display: block;
 }
 
-.btn-avatar-reroll {
-    padding: 0.55rem 0.85rem;
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    background: var(--bg-card);
-    color: var(--text);
-    font-weight: 600;
-    cursor: pointer;
-    transition: border-color 0.2s, background 0.2s;
-}
-
-.btn-avatar-reroll:hover {
-    border-color: var(--accent);
-    background: rgba(247, 183, 49, 0.08);
+.avatar-inline-hint {
+    margin-top: 0.35rem;
+    font-size: 0.78rem;
+    color: var(--text-muted);
 }
 
 .form-group label {

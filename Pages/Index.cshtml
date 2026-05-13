@@ -21,16 +21,15 @@
         <form method="post">
             <div class="form-group">
                 <label for="username">Namn </label>
-                <input type="text" id="username" name="Username" class="form-input" maxlength="20"
-                       value="@Model.SavedName" autocomplete="off" />
-            </div>
-
-            <div class="form-group avatar-login-group">
-                <label>Din avatar</label>
-                <div class="avatar-login-preview-wrap">
-                    <img id="login-avatar-preview" class="login-avatar-preview" src="" alt="Din avatar" />
-                    <button type="button" id="reroll-avatar-btn" class="btn-avatar-reroll">Slumpa om</button>
+                <div class="username-avatar-row">
+                    <input type="text" id="username" name="Username" class="form-input" maxlength="20"
+                           value="@Model.SavedName" autocomplete="off" />
+                    <button type="button" id="login-avatar-btn" class="login-avatar-btn"
+                            title="Klicka för att slumpa ny avatar">
+                        <img id="login-avatar-preview" class="login-avatar-preview" src="" alt="Din avatar" />
+                    </button>
                 </div>
+                <div class="avatar-inline-hint">Klicka på avataren för att slumpa en ny</div>
                 <input type="hidden" id="avatar-id" name="AvatarId" />
             </div>
 
