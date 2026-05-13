@@ -71,6 +71,9 @@ artifacts/
 # ASP.NET Scaffolding
 ScaffoldingReadMe.txt
 
+# Runtime app state (persisted unlocks/history during event)
+App_Data/runtime-state/
+
 # StyleCop
 StyleCopReport.xml
 

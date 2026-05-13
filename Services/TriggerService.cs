@@ -1,21 +1,35 @@
 using System.Text.Json;
 using DanneFest.Models;
+using Microsoft.Extensions.Logging;
 
 namespace DanneFest.Services;
 
 // Singleton — trådsäker via _lock.
 public class TriggerService
 {
+    private sealed class PersistedTriggerState
+    {
+        public List<string> UnlockedWords { get; set; } = new();
+        public List<string> UnlockedCombos { get; set; } = new();
+    }
+
     private readonly IWebHostEnvironment _env;
+    private readonly ILogger<TriggerService> _logger;
+    private readonly JsonSerializerOptions _jsonOptions = new() { WriteIndented = true };
+    private readonly string _stateDirectory;
+    private readonly string _stateFilePath;
     private TriggerConfig _config = new();
     private readonly object _lock = new();
 
     private readonly HashSet<string> _unlockedWords = new(StringComparer.OrdinalIgnoreCase);
     private readonly HashSet<string> _unlockedCombos = new();
 
-    public TriggerService(IWebHostEnvironment env)
+    public TriggerService(IWebHostEnvironment env, ILogger<TriggerService> logger)
     {
         _env = env;
+        _logger = logger;
+        _stateDirectory = Path.Combine(_env.ContentRootPath, "App_Data", "runtime-state");
+        _stateFilePath = Path.Combine(_stateDirectory, "trigger-state.json");
     }
 
     public void Initialize(string? passwordOverride = null)
@@ -38,6 +52,8 @@ public class TriggerService
             _config.Password = passwordOverride;
             Console.WriteLine("[TriggerService] Lösenord satt via kommandorad.");
         }
+
+        LoadPersistedState();
 
         Console.WriteLine($"[TriggerService] Laddade {_config.Words.Count} ord och {_config.Combos.Count} kombos.");
     }
@@ -80,6 +96,7 @@ public class TriggerService
 
         var result = new TriggerResult();
         var lowerMessage = messageText.ToLowerInvariant();
+        var hasNewUnlocks = false;
 
         lock (_lock)
         {
@@ -89,6 +106,7 @@ public class TriggerService
                     && _unlockedWords.Add(triggerWord.Word.ToLowerInvariant()))
                 {
                     result.NewlyUnlockedWords.Add(triggerWord);
+                    hasNewUnlocks = true;
                 }
             }
 
@@ -104,6 +122,7 @@ public class TriggerService
                 {
                     _unlockedCombos.Add(comboKey);
                     result.NewlyUnlockedCombos.Add(combo);
+                    hasNewUnlocks = true;
                 }
             }
 
@@ -111,6 +130,80 @@ public class TriggerService
             result.TotalUnlockedCombos = _unlockedCombos.Count;
         }
 
+        if (hasNewUnlocks)
+        {
+            PersistState();
+        }
+
         return result;
+    }
+
+    private void LoadPersistedState()
+    {
+        try
+        {
+            if (!File.Exists(_stateFilePath))
+            {
+                return;
+            }
+
+            var json = File.ReadAllText(_stateFilePath);
+            var persisted = JsonSerializer.Deserialize<PersistedTriggerState>(json);
+            if (persisted is null)
+            {
+                return;
+            }
+
+            lock (_lock)
+            {
+                _unlockedWords.Clear();
+                _unlockedCombos.Clear();
+
+                foreach (var word in persisted.UnlockedWords.Where(w => !string.IsNullOrWhiteSpace(w)))
+                {
+                    _unlockedWords.Add(word.ToLowerInvariant());
+                }
+
+                foreach (var combo in persisted.UnlockedCombos.Where(c => !string.IsNullOrWhiteSpace(c)))
+                {
+                    _unlockedCombos.Add(combo);
+                }
+            }
+
+            _logger.LogInformation("Loaded persisted trigger state: {WordCount} words, {ComboCount} combos.",
+                UnlockedWordCount,
+                UnlockedComboCount);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to load persisted trigger state. Starting with empty unlock state.");
+        }
+    }
+
+    private void PersistState()
+    {
+        PersistedTriggerState snapshot;
+
+        lock (_lock)
+        {
+            snapshot = new PersistedTriggerState
+            {
+                UnlockedWords = _unlockedWords.ToList(),
+                UnlockedCombos = _unlockedCombos.ToList()
+            };
+        }
+
+        try
+        {
+            Directory.CreateDirectory(_stateDirectory);
+            var tempFile = _stateFilePath + ".tmp";
+            var json = JsonSerializer.Serialize(snapshot, _jsonOptions);
+            File.WriteAllText(tempFile, json);
+            File.Move(tempFile, _stateFilePath, true);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to persist trigger state to disk.");
+        }
     }
 }
