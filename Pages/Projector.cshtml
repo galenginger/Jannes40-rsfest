@@ -7,10 +7,10 @@
 
 @section Styles {
     <style>
-                body {
-                    overflow: hidden;
-                    background: #0a0a1a;
-                }
+                    body {
+                        overflow: hidden;
+                        background: #0a0a1a;
+                    }
     </style>
 }
 
@@ -18,7 +18,7 @@
 
     @* Titelrad *@
     <div class="projector-header">
-        <span>Danne fyller 40!</span>
+        <span>Daniel fyller 40!</span>
         <form method="post" asp-page-handler="Logout">
             <button type="submit" class="btn-logout proj-logout">Logga ut</button>
         </form>
@@ -42,7 +42,11 @@
 
     @* Meddelandeflöde — stora meddelanden som scrollar uppåt *@
     <div class="projector-feed" id="projector-feed">
-        <div id="projector-messages"></div>
+        <div class="projector-columns" id="projector-columns">
+            <div class="projector-column projector-column-old" id="projector-col-left"></div>
+            <div class="projector-column projector-column-mid" id="projector-col-mid"></div>
+            <div class="projector-column projector-column-new" id="projector-col-right"></div>
+        </div>
     </div>
 
     @* Triggeranimations-overlay *@
@@ -54,8 +58,8 @@
 
 @section Scripts {
     <script>
-                    const TRIGGER_WORDS = @Html.Raw(Model.WordsJson);
-                    const UNLOCKED_WORDS = new Set(@Html.Raw(Model.UnlockedWordSetJson));
+                        const TRIGGER_WORDS = @Html.Raw(Model.WordsJson);
+                        const UNLOCKED_WORDS = new Set(@Html.Raw(Model.UnlockedWordSetJson));
     </script>
     <script src="~/js/projector.js" asp-append-version="true"></script>
 }
