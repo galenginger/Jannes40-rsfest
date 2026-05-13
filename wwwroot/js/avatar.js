@@ -47,19 +47,21 @@ function generateAvatar(username, size, avatarId) {
             ? ['#1d1135', '#301934', '#0a2239', '#001f2f'][h3 % 4]
             : ['#2d3436','#1a3a5c','#0d6e6e','#4a0080','#6d4c41','#1e6b3a'][h3 % 6];
 
-    const hairStyle  = h0 % 8;  // 0=kort, 1=lång, 2=afro, 3=knutar, 4=taggig, 5=mohawk, 6=undercut, 7=lockig lugg
+    const hairStyle  = h0 % 11;  // 0=kort, 1=lång, 2=afro, 3=knutar, 4=taggig, 5=mohawk, 6=undercut, 7=lockig lugg, 8=hästsvans, 9=bob, 10=långa vågor
     const eyeStyle   = h1 % 8;  // 0=anime, 1=prick, 2=lycklig (^_^), 3=blink, 4=sömnig, 5=arg, 6=spiral, 7=stjärnögon
     const mouthStyle = h2 % 9;  // 0=leende, 1=grin, 2=smirk, 3=förvånad, 4=rak smile, 5=tunga, 6=flin, 7=sur, 8=biten läpp
     const robotMouthStyle = h3 % 3;
     const hasBlush   = (h5 % 3) === 0;
+    const hasFeminineTouch = !isRobot && (h5 % 4 === 0 || h4 % 7 === 0);
+    const hasLashes = hasFeminineTouch && (h1 % 2 === 0);
+    const hasLipGloss = hasFeminineTouch && (h3 % 2 === 1);
     const accessory  = h4 % 8;  // 0=inget, 1=glasögon, 2=festhatt, 3=rosett, 4=mustasch, 5=örhängen, 6=krona, 7=inget
     const browColor  = isRobot ? '#51606d' : isAlien ? '#274e13' : '#3d2b1f';
     const eyeY       = 52;
 
     const p = [];
 
-    // ── Bakgrund ─────────────────────────────────────────────────────────
-    p.push(`<circle cx="50" cy="50" r="50" fill="${bg}"/>`);
+    // Ingen fast bakgrund: avataren blir transparent runt ansiktet.
 
     // ── Öron (bakom ansikte) ─────────────────────────────────────────────
     if (isRobot) {
@@ -75,8 +77,8 @@ function generateAvatar(username, size, avatarId) {
     } else {
         p.push(`<circle cx="15" cy="58" r="9" fill="${skin}"/>`);
         p.push(`<circle cx="85" cy="58" r="9" fill="${skin}"/>`);
-        p.push(`<circle cx="15" cy="58" r="5" fill="${bg}" opacity="0.25"/>`);
-        p.push(`<circle cx="85" cy="58" r="5" fill="${bg}" opacity="0.25"/>`);
+        p.push(`<circle cx="15" cy="58" r="5" fill="rgba(0,0,0,0.12)"/>`);
+        p.push(`<circle cx="85" cy="58" r="5" fill="rgba(0,0,0,0.12)"/>`);
     }
 
     // ── Hår (bakom ansikte) ──────────────────────────────────────────────
@@ -107,13 +109,28 @@ function generateAvatar(username, size, avatarId) {
         // Undercut / sidokammat
         p.push(`<rect x="19" y="21" width="62" height="18" rx="8" fill="${hair}"/>`);
         p.push(`<path d="M24,35 Q45,18 79,25 L79,40 L24,40 Z" fill="${hair}"/>`);
-    } else if (!isRobot) {
+    } else if (!isRobot && hairStyle === 7) {
         // Lockig lugg
         p.push(`<ellipse cx="50" cy="25" rx="30" ry="16" fill="${hair}"/>`);
         p.push(`<circle cx="30" cy="33" r="7" fill="${hair}"/>`);
         p.push(`<circle cx="44" cy="35" r="7" fill="${hair}"/>`);
         p.push(`<circle cx="58" cy="35" r="7" fill="${hair}"/>`);
         p.push(`<circle cx="72" cy="33" r="7" fill="${hair}"/>`);
+    } else if (!isRobot && hairStyle === 8) {
+        // Hög hästsvans
+        p.push(`<ellipse cx="50" cy="26" rx="25" ry="14" fill="${hair}"/>`);
+        p.push(`<ellipse cx="78" cy="32" rx="8" ry="16" fill="${hair}"/>`);
+        p.push(`<rect x="63" y="24" width="8" height="7" rx="2" fill="${bgPalette[(h0 + 2) % bgPalette.length]}"/>`);
+    } else if (!isRobot && hairStyle === 9) {
+        // Bob med fylliga sidor
+        p.push(`<rect x="20" y="20" width="60" height="46" rx="14" fill="${hair}"/>`);
+        p.push(`<ellipse cx="23" cy="48" rx="7" ry="14" fill="${hair}"/>`);
+        p.push(`<ellipse cx="77" cy="48" rx="7" ry="14" fill="${hair}"/>`);
+    } else if (!isRobot) {
+        // Långa vågor
+        p.push(`<rect x="20" y="20" width="60" height="66" rx="12" fill="${hair}"/>`);
+        p.push(`<path d="M24,30 Q32,38 24,46 Q32,54 24,62" stroke="rgba(255,255,255,0.22)" stroke-width="2" fill="none"/>`);
+        p.push(`<path d="M76,30 Q68,38 76,46 Q68,54 76,62" stroke="rgba(255,255,255,0.22)" stroke-width="2" fill="none"/>`);
     }
 
     // ── Ansikte ──────────────────────────────────────────────────────────
@@ -150,6 +167,13 @@ function generateAvatar(username, size, avatarId) {
         p.push(`<path d="M22,33 Q43,20 78,27 L78,38 L22,38 Z" fill="${hair}"/>`);
     } else if (!isRobot && hairStyle === 7) {
         p.push(`<path d="M24,33 Q32,27 40,33 Q48,27 56,33 Q64,27 72,33" stroke="${hair}" stroke-width="8" fill="none" stroke-linecap="round"/>`);
+    } else if (!isRobot && hairStyle === 8) {
+        p.push(`<path d="M24,31 Q37,22 50,27 Q63,22 76,31 L76,39 L24,39 Z" fill="${hair}"/>`);
+        p.push(`<rect x="64" y="27" width="7" height="6" rx="2" fill="${bgPalette[(h0 + 2) % bgPalette.length]}"/>`);
+    } else if (!isRobot && hairStyle === 9) {
+        p.push(`<rect x="22" y="22" width="56" height="14" rx="7" fill="${hair}"/>`);
+    } else if (!isRobot && hairStyle === 10) {
+        p.push(`<path d="M24,30 Q32,24 40,30 Q48,24 56,30 Q64,24 72,30" stroke="${hair}" stroke-width="7" fill="none" stroke-linecap="round"/>`);
     }
 
     // ── Rodnad ───────────────────────────────────────────────────────────
@@ -248,6 +272,12 @@ function generateAvatar(username, size, avatarId) {
         p.push(`<circle cx="65" cy="52" r="1.2" fill="white"/>`);
     }
 
+    if (!isRobot && hasLashes) {
+        // Diskreta fransar/eyeliner
+        p.push(`<path d="M27,45 L24,43 M35,43 L35,40 M43,45 L46,43" stroke="#2f1f1f" stroke-width="1.2" stroke-linecap="round"/>`);
+        p.push(`<path d="M57,45 L54,43 M65,43 L65,40 M73,45 L76,43" stroke="#2f1f1f" stroke-width="1.2" stroke-linecap="round"/>`);
+    }
+
     // ── Näsa ─────────────────────────────────────────────────────────────
     if (isRobot) {
         p.push(`<rect x="47" y="62" width="6" height="5" rx="1" fill="#6d7a86"/>`);
@@ -308,6 +338,10 @@ function generateAvatar(username, size, avatarId) {
         p.push(`<rect x="44" y="72" width="12" height="3" rx="1.5" fill="white" opacity="0.8"/>`);
     }
 
+    if (!isRobot && hasLipGloss) {
+        p.push(`<ellipse cx="50" cy="75" rx="8" ry="2.1" fill="rgba(255,255,255,0.32)"/>`);
+    }
+
     // ── Tillbehör ─────────────────────────────────────────────────────────
     if (isRobot) {
         // Robot-detaljer
@@ -362,6 +396,15 @@ function generateAvatar(username, size, avatarId) {
         p.push(`<circle cx="34" cy="12" r="2" fill="#fff4c2"/>`);
         p.push(`<circle cx="50" cy="9" r="2.2" fill="#fff4c2"/>`);
         p.push(`<circle cx="66" cy="12" r="2" fill="#fff4c2"/>`);
+    } else if (hasFeminineTouch && accessory === 7) {
+        // Liten hårspänne-blomma
+        const clip = bgPalette[(h4 + 5) % bgPalette.length];
+        p.push(`<circle cx="71" cy="34" r="3" fill="${clip}"/>`);
+        p.push(`<circle cx="67" cy="34" r="2.2" fill="${clip}" opacity="0.9"/>`);
+        p.push(`<circle cx="75" cy="34" r="2.2" fill="${clip}" opacity="0.9"/>`);
+        p.push(`<circle cx="71" cy="30" r="2.2" fill="${clip}" opacity="0.9"/>`);
+        p.push(`<circle cx="71" cy="38" r="2.2" fill="${clip}" opacity="0.9"/>`);
+        p.push(`<circle cx="71" cy="34" r="1.1" fill="white"/>`);
     }
 
     const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 100 100">${p.join('')}</svg>`;

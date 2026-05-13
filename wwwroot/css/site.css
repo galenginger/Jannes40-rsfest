@@ -111,8 +111,8 @@ html, body {
 .login-avatar-preview {
     width: 72px;
     height: 72px;
-    border-radius: 50%;
-    border: 2px solid rgba(255,255,255,0.15);
+    border-radius: 0;
+    border: none;
     flex-shrink: 0;
     display: block;
 }
@@ -644,10 +644,10 @@ html, body {
 .message-avatar {
     width: 36px;
     height: 36px;
-    border-radius: 50%;
-    background: var(--bg-input);
+    border-radius: 0;
+    background: transparent;
     flex-shrink: 0;
-    overflow: hidden;
+    overflow: visible;
 }
 
 .message-avatar img {
@@ -964,10 +964,10 @@ html, body {
 .proj-message-avatar {
     width: 26px;
     height: 26px;
-    border-radius: 50%;
-    background: var(--bg-input);
+    border-radius: 0;
+    background: transparent;
     flex-shrink: 0;
-    overflow: hidden;
+    overflow: visible;
 }
 
 .proj-message-avatar img {
