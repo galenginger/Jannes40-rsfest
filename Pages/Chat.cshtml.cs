@@ -11,6 +11,7 @@ public class ChatModel : PageModel
     private readonly TriggerService _triggerService;
 
     public string Username { get; private set; } = string.Empty;
+    public string AvatarId { get; private set; } = string.Empty;
     public int TotalWords { get; private set; }
     public int TotalCombos { get; private set; }
     public int UnlockedWords { get; private set; }
@@ -33,6 +34,7 @@ public class ChatModel : PageModel
             return RedirectToPage("/Index");
 
         Username = username;
+        AvatarId = HttpContext.Session.GetString("avatar_id") ?? string.Empty;
         TotalWords = _triggerService.TotalWordCount;
         TotalCombos = _triggerService.TotalComboCount;
         UnlockedWords = _triggerService.UnlockedWordCount;

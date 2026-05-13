@@ -184,7 +184,7 @@ const isBraveBrowser = !!navigator.brave;
 const signalrTransportOptions = isBraveBrowser
     ? { transport: signalR.HttpTransportType.LongPolling }
     : undefined;
-const hubUrl = `${SIGNALR_URL}${SIGNALR_URL.includes("?") ? "&" : "?"}username=${encodeURIComponent(MY_NAME)}`;
+const hubUrl = `${SIGNALR_URL}${SIGNALR_URL.includes("?") ? "&" : "?"}username=${encodeURIComponent(MY_NAME)}&avatarId=${encodeURIComponent(MY_AVATAR_ID || "")}`;
 
 const connection = new signalR.HubConnectionBuilder()
     .withUrl(hubUrl, signalrTransportOptions)
@@ -254,7 +254,7 @@ async function loadHistory(sinceDate) {
             // Historiken kommer i kronologisk ordning från servern.
             // Rendera i samma ordning så nyaste hamnar längst ner, precis som live-meddelanden.
             history.forEach(msg => {
-                addMessage(msg.username, msg.text, msg.isHighlighted, msg.timestamp);
+                addMessage(msg.username, msg.text, msg.isHighlighted, msg.avatarId, msg.timestamp);
             });
         }
     } catch (err) {
@@ -301,9 +301,9 @@ window.addEventListener("pageshow", () => {
     }
 });
 
-connection.on("ReceiveMessage", (username, text, isHighlighted, triggers, timestamp) => {
+connection.on("ReceiveMessage", (username, text, isHighlighted, avatarId, triggers, timestamp) => {
     lastMessageTime = timestamp;
-    addMessage(username, text, isHighlighted, timestamp);
+    addMessage(username, text, isHighlighted, avatarId, timestamp);
 
     if (triggers.totalUnlockedWords !== undefined) {
         updateCounters(triggers.totalUnlockedWords, triggers.totalUnlockedCombos);
@@ -421,7 +421,7 @@ function sendMessage() {
 
 // ===== Hjälpfunktioner =====
 
-function addMessage(username, text, isHighlighted, timestamp = null) {
+function addMessage(username, text, isHighlighted, avatarId = null, timestamp = null) {
     const isOwn = username === MY_NAME;
 
     const wrapper = document.createElement("div");
@@ -430,7 +430,8 @@ function addMessage(username, text, isHighlighted, timestamp = null) {
     const avatar = document.createElement("div");
     avatar.className = "message-avatar";
     const avatarImg = document.createElement("img");
-    avatarImg.src = generateAvatar(username);
+    const effectiveAvatarId = avatarId || (isOwn ? MY_AVATAR_ID : "");
+    avatarImg.src = generateAvatar(username, 36, effectiveAvatarId);
     avatarImg.alt = username.charAt(0).toUpperCase();
     avatar.appendChild(avatarImg);
 
@@ -517,14 +518,14 @@ function randomJoinColor() {
     };
 }
 
-function addJoinMessage(username) {
+function addJoinMessage(username, avatarId = null) {
     const wrapper = document.createElement("div");
     wrapper.className = "message join-message";
 
     const avatar = document.createElement("div");
     avatar.className = "message-avatar";
     const avatarImg = document.createElement("img");
-    avatarImg.src = generateAvatar(username);
+    avatarImg.src = generateAvatar(username, 36, avatarId);
     avatarImg.alt = username.charAt(0).toUpperCase();
     avatar.appendChild(avatarImg);
 

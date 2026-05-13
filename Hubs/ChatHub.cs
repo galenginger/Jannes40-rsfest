@@ -7,11 +7,17 @@ namespace DanneFest.Hubs;
 
 public class ChatHub : Hub
 {
+    private sealed class ConnectedUser
+    {
+        public string Username { get; init; } = string.Empty;
+        public string AvatarId { get; init; } = string.Empty;
+    }
+
     private readonly TriggerService _triggerService;
     private readonly MessageHistoryService _historyService;
 
     // ConnectionId -> användarnamn (sätts från session, aldrig från klienten)
-    private static readonly ConcurrentDictionary<string, string> _connectionUsers = new();
+    private static readonly ConcurrentDictionary<string, ConnectedUser> _connectionUsers = new();
 
     public ChatHub(TriggerService triggerService, MessageHistoryService historyService)
     {
@@ -23,6 +29,7 @@ public class ChatHub : Hub
     {
         var httpContext = Context.GetHttpContext();
         var username = string.Empty;
+        var avatarId = string.Empty;
 
         if (httpContext != null)
         {
@@ -30,6 +37,7 @@ public class ChatHub : Hub
             {
                 await httpContext.Session.LoadAsync();
                 username = httpContext.Session.GetString("username") ?? string.Empty;
+                avatarId = httpContext.Session.GetString("avatar_id") ?? string.Empty;
             }
             catch (InvalidOperationException)
             {
@@ -41,12 +49,24 @@ public class ChatHub : Hub
                 username = httpContext.Request.Query["username"].ToString();
             }
 
+            if (string.IsNullOrWhiteSpace(avatarId))
+            {
+                avatarId = httpContext.Request.Query["avatarId"].ToString();
+            }
+
             if (!string.IsNullOrWhiteSpace(username))
             {
                 username = username.Trim();
                 if (username.Length > 40)
                     username = username[..40];
-                _connectionUsers[Context.ConnectionId] = username;
+
+                avatarId = NormalizeAvatarId(avatarId);
+
+                _connectionUsers[Context.ConnectionId] = new ConnectedUser
+                {
+                    Username = username,
+                    AvatarId = avatarId
+                };
             }
         }
 
@@ -73,6 +93,7 @@ public class ChatHub : Hub
     private Task BroadcastParticipants()
     {
         var participants = _connectionUsers.Values
+            .Select(u => u.Username)
             .Where(u => !string.IsNullOrWhiteSpace(u))
             .Select(u => u.Trim())
             .Distinct(StringComparer.OrdinalIgnoreCase)
@@ -87,11 +108,14 @@ public class ChatHub : Hub
 
     public async Task SendMessage(string text)
     {
-        if (!_connectionUsers.TryGetValue(Context.ConnectionId, out var username)
-            || string.IsNullOrWhiteSpace(username))
+        if (!_connectionUsers.TryGetValue(Context.ConnectionId, out var user)
+            || string.IsNullOrWhiteSpace(user.Username))
         {
             return;
         }
+
+        var username = user.Username;
+        var avatarId = user.AvatarId;
 
         text = text.Trim();
         if (string.IsNullOrWhiteSpace(text) || text.Length > 256) return;
@@ -100,7 +124,7 @@ public class ChatHub : Hub
         var isHighlighted = _triggerService.IsHighlightedUser(username);
         var timestamp = DateTime.UtcNow;
 
-        await Clients.All.SendAsync("ReceiveMessage", username, text, isHighlighted, new
+        await Clients.All.SendAsync("ReceiveMessage", username, text, isHighlighted, avatarId, new
         {
             newWords = triggerResult.NewlyUnlockedWords.Select(w => new { w.Word, w.Emoji }).ToList(),
             newCombos = triggerResult.NewlyUnlockedCombos.Select(c => new { c.Description, c.Emoji }).ToList(),
@@ -111,6 +135,7 @@ public class ChatHub : Hub
         _historyService.Add(new MessageRecord
         {
             Username = username,
+            AvatarId = avatarId,
             Text = text,
             IsHighlighted = isHighlighted,
             Timestamp = timestamp
@@ -120,5 +145,21 @@ public class ChatHub : Hub
     public Task<List<MessageRecord>> GetHistory(DateTime since)
     {
         return Task.FromResult(_historyService.GetMessagesSince(since));
+    }
+
+    private static string NormalizeAvatarId(string? raw)
+    {
+        if (string.IsNullOrWhiteSpace(raw))
+            return string.Empty;
+
+        var cleaned = new string(raw
+            .Trim()
+            .Where(c => char.IsLetterOrDigit(c) || c == '-' || c == '_')
+            .ToArray());
+
+        if (cleaned.Length > 64)
+            cleaned = cleaned[..64];
+
+        return cleaned;
     }
 }

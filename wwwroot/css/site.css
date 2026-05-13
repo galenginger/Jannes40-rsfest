@@ -94,6 +94,45 @@ html, body {
     margin-bottom: 1.2rem;
 }
 
+.avatar-login-group {
+    margin-top: 0.2rem;
+}
+
+.avatar-login-preview-wrap {
+    display: flex;
+    align-items: center;
+    gap: 0.9rem;
+    padding: 0.7rem;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--bg-input);
+}
+
+.login-avatar-preview {
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    border: 2px solid rgba(255,255,255,0.15);
+    flex-shrink: 0;
+    display: block;
+}
+
+.btn-avatar-reroll {
+    padding: 0.55rem 0.85rem;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--bg-card);
+    color: var(--text);
+    font-weight: 600;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+}
+
+.btn-avatar-reroll:hover {
+    border-color: var(--accent);
+    background: rgba(247, 183, 49, 0.08);
+}
+
 .form-group label {
     display: block;
     font-size: 0.9rem;

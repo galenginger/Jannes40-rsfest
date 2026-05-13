@@ -101,6 +101,7 @@
 @section Scripts {
 <script>
     const MY_NAME = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Username));
+    const MY_AVATAR_ID = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.AvatarId));
 
     // Hela trigger-konfigurationen och aktuell upplåst state — renderas server-side
     const TRIGGER_WORDS  = @Html.Raw(Model.WordsJson);

@@ -49,7 +49,7 @@ async function loadHistory(sinceDate) {
     try {
         const history = await connection.invoke("GetHistory", sinceDate);
         if (history && history.length > 0) {
-            history.forEach(msg => addProjMessage(msg.username, msg.text, msg.isHighlighted, msg.timestamp));
+            history.forEach(msg => addProjMessage(msg.username, msg.text, msg.isHighlighted, msg.avatarId, msg.timestamp));
         }
     } catch (err) {
         console.error("GetHistory (projector) misslyckades:", err);
@@ -71,9 +71,9 @@ async function startConnection() {
     }
 }
 
-connection.on("ReceiveMessage", (username, text, isHighlighted, triggers, timestamp) => {
+connection.on("ReceiveMessage", (username, text, isHighlighted, avatarId, triggers, timestamp) => {
     lastMessageTime = timestamp;
-    addProjMessage(username, text, isHighlighted, timestamp);
+    addProjMessage(username, text, isHighlighted, avatarId, timestamp);
 
     if (triggers.totalUnlockedWords !== undefined) {
         projWordsEl.textContent  = triggers.totalUnlockedWords;
@@ -152,7 +152,7 @@ window.addEventListener("pageshow", () => {
 });
 
 // Lägger till ett nytt meddelande i projektor-vyn och tar bort gamla om det blir för många
-function addProjMessage(username, text, isHighlighted, timestamp = null) {
+function addProjMessage(username, text, isHighlighted, avatarId = null, timestamp = null) {
     const msg = document.createElement("div");
     msg.className = "proj-message" + (isHighlighted ? " highlighted" : "");
 
@@ -162,7 +162,7 @@ function addProjMessage(username, text, isHighlighted, timestamp = null) {
     const avatarEl = document.createElement("div");
     avatarEl.className = "proj-message-avatar";
     const avatarImg = document.createElement("img");
-    avatarImg.src = generateAvatar(username, 42);
+    avatarImg.src = generateAvatar(username, 42, avatarId);
     avatarImg.alt = username.charAt(0).toUpperCase();
     avatarEl.appendChild(avatarImg);
 
@@ -236,7 +236,7 @@ function randomJoinColor() {
     };
 }
 
-function addProjJoinMessage(username) {
+function addProjJoinMessage(username, avatarId = null) {
     const msg = document.createElement("div");
     msg.className = "proj-message join-message";
 
@@ -246,7 +246,7 @@ function addProjJoinMessage(username) {
     const avatarEl = document.createElement("div");
     avatarEl.className = "proj-message-avatar";
     const avatarImg = document.createElement("img");
-    avatarImg.src = generateAvatar(username, 42);
+    avatarImg.src = generateAvatar(username, 42, avatarId);
     avatarImg.alt = username.charAt(0).toUpperCase();
     avatarEl.appendChild(avatarImg);
 

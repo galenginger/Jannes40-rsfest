@@ -14,6 +14,9 @@ public class IndexModel : PageModel
     [BindProperty]
     public string? Username { get; set; }
 
+    [BindProperty]
+    public string? AvatarId { get; set; }
+
     public string? ErrorMessage { get; set; }
 
     // Förifyllt från cookie, används bara för formuläret — aldrig för auth
@@ -56,7 +59,12 @@ public class IndexModel : PageModel
             var cleanName = Username.Trim();
             if (cleanName.Length > 50) cleanName = cleanName[..50];
 
+            var cleanAvatarId = NormalizeAvatarId(AvatarId);
+            if (string.IsNullOrEmpty(cleanAvatarId))
+                cleanAvatarId = "name-" + cleanName.ToLowerInvariant();
+
             HttpContext.Session.SetString("username", cleanName);
+            HttpContext.Session.SetString("avatar_id", cleanAvatarId);
 
             Response.Cookies.Append("danne_name", cleanName, new CookieOptions
             {
@@ -70,5 +78,21 @@ public class IndexModel : PageModel
         }
 
         return RedirectToPage("/Projector");
+    }
+
+    private static string NormalizeAvatarId(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+            return string.Empty;
+
+        var cleaned = new string(value
+            .Trim()
+            .Where(c => char.IsLetterOrDigit(c) || c == '-' || c == '_')
+            .ToArray());
+
+        if (cleaned.Length > 64)
+            cleaned = cleaned[..64];
+
+        return cleaned;
     }
 }
