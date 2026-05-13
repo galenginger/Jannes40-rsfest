@@ -98,9 +98,10 @@ connection.on("UpdateParticipants", (count) => {
     projParticipantsEl.textContent = count;
 });
 
-connection.on("UserJoined", (username) => {
-    addProjJoinMessage(username);
-});
+// UserJoined-event är inaktiverad
+// connection.on("UserJoined", (username) => {
+//     addProjJoinMessage(username);
+// });
 
 startConnection();
 

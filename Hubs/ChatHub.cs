@@ -63,11 +63,12 @@ public class ChatHub : Hub
 
         await BroadcastParticipantCount();
 
-        if (_connectionUsers.TryGetValue(Context.ConnectionId, out var joinedUser) && !string.IsNullOrEmpty(joinedUser))
-        {
-            if (_announcedUsers.TryAdd(joinedUser, true))
-                await Clients.Others.SendAsync("UserJoined", joinedUser);
-        }
+        // Meddelandena "Är med på festen" är inaktiverade
+        // if (_connectionUsers.TryGetValue(Context.ConnectionId, out var joinedUser) && !string.IsNullOrEmpty(joinedUser))
+        // {
+        //     if (_announcedUsers.TryAdd(joinedUser, true))
+        //         await Clients.Others.SendAsync("UserJoined", joinedUser);
+        // }
 
         await base.OnConnectedAsync();
     }

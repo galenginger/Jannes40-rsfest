@@ -300,9 +300,10 @@ connection.on("UpdateParticipants", (count) => {
     document.getElementById("participant-count").textContent = count;
 });
 
-connection.on("UserJoined", (username) => {
-    addJoinMessage(username);
-});
+// UserJoined-event är inaktiverad
+// connection.on("UserJoined", (username) => {
+//     addJoinMessage(username);
+// });
 
 sendBtn.disabled = true;
 startConnection();
