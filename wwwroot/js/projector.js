@@ -45,10 +45,26 @@ function startManualReconnectLoop() {
     }, 3000);
 }
 
+async function loadHistory(sinceDate) {
+    try {
+        const history = await connection.invoke("GetHistory", sinceDate);
+        if (history && history.length > 0) {
+            history.forEach(msg => addProjMessage(msg.username, msg.text, msg.isHighlighted, msg.timestamp));
+        }
+    } catch (err) {
+        console.error("GetHistory (projector) misslyckades:", err);
+    }
+}
+
 async function startConnection() {
     try {
         await connection.start();
         stopManualReconnectLoop();
+        // Hämta historik vid första anslutning (alla tillgängliga, upp till 200)
+        if (lastMessageTime === null) {
+            const veryOldDate = new Date(0); // 1970-01-01, får alla meddelanden från buffern
+            await loadHistory(veryOldDate);
+        }
     } catch (err) {
         console.error("SignalR-anslutning misslyckades:", err);
         startManualReconnectLoop();
@@ -107,15 +123,9 @@ startConnection();
 
 connection.onreconnected(async () => {
     stopManualReconnectLoop();
+    // Hämta missade meddelanden från reconnect
     if (lastMessageTime !== null) {
-        try {
-            const history = await connection.invoke("GetHistory", lastMessageTime);
-            if (history && history.length > 0) {
-                history.forEach(msg => addProjMessage(msg.username, msg.text, msg.isHighlighted, msg.timestamp));
-            }
-        } catch (err) {
-            console.error("GetHistory (projector) misslyckades:", err);
-        }
+        await loadHistory(lastMessageTime);
     }
 });
 

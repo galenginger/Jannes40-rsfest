@@ -196,11 +196,38 @@ async function startConnection() {
         reconnectBanner.hidden = true;
         sendBtn.disabled = false;
         messageInput.focus();
+        // Hämta historik vid första anslutning (alla tillgängliga, upp till 200)
+        if (lastMessageTime === null) {
+            const veryOldDate = new Date(0); // 1970-01-01, får alla meddelanden från buffern
+            await loadHistory(veryOldDate);
+        }
     } catch (err) {
         console.error("SignalR-anslutning misslyckades:", err);
         reconnectBanner.hidden = false;
         sendBtn.disabled = true;
         startManualReconnectLoop();
+    }
+}
+
+async function loadHistory(sinceDate) {
+    try {
+        const history = await connection.invoke("GetHistory", sinceDate);
+        if (history && history.length > 0) {
+            const sep = document.createElement("div");
+            sep.className = "history-separator";
+            sep.textContent = `— ${history.length} meddelande${history.length > 1 ? "n" : ""} från tidigare —`;
+            messagesInner.insertBefore(sep, messagesInner.firstChild);
+            history.reverse();
+            history.forEach(msg => {
+                const temp = messagesInner.firstChild;
+                addMessage(msg.username, msg.text, msg.isHighlighted, msg.timestamp);
+                if (messagesInner.firstChild !== temp) {
+                    messagesInner.insertBefore(messagesInner.lastChild, temp);
+                }
+            });
+        }
+    } catch (err) {
+        console.error("GetHistory misslyckades:", err);
     }
 }
 
@@ -212,19 +239,9 @@ connection.onreconnected(async () => {
     stopManualReconnectLoop();
     reconnectBanner.hidden = true;
     sendBtn.disabled = false;
+    // Hämta missade meddelanden från reconnect
     if (lastMessageTime !== null) {
-        try {
-            const history = await connection.invoke("GetHistory", lastMessageTime);
-            if (history && history.length > 0) {
-                const sep = document.createElement("div");
-                sep.className = "history-separator";
-                sep.textContent = `— ${history.length} meddelande${history.length > 1 ? "n" : ""} du missade —`;
-                messagesInner.appendChild(sep);
-                history.forEach(msg => addMessage(msg.username, msg.text, msg.isHighlighted, msg.timestamp));
-            }
-        } catch (err) {
-            console.error("GetHistory misslyckades:", err);
-        }
+        await loadHistory(lastMessageTime);
     }
 });
 
