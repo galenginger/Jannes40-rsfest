@@ -1,16 +1,16 @@
 @page
 @model ProjectorModel
 @{
-    ViewData["Title"] = "Danne fyller 40 — Projektor";
+    ViewData["Title"] = "Daniel fyller 40 — Projektor";
     Layout = "_Layout";
 }
 
 @section Styles {
     <style>
-            body {
-                overflow: hidden;
-                background: #0a0a1a;
-            }
+                body {
+                    overflow: hidden;
+                    background: #0a0a1a;
+                }
     </style>
 }
 
@@ -28,7 +28,7 @@
     <div class="projector-counters">
         <div class="proj-counter">
             <span class="proj-counter-icon">✨</span>
-            <span>Ord: <strong><span      id="proj-words">@Model.UnlockedWords</span>/@Model.TotalWords</strong></span>
+            <span>Ord: <strong><span id="proj-words">@Model.UnlockedWords</span>/@Model.TotalWords</strong></span>
         </div>
         <div class="proj-counter">
             <span class="proj-counter-icon">🔥</span>
@@ -54,8 +54,8 @@
 
 @section Scripts {
     <script>
-                const TRIGGER_WORDS = @Html.Raw(Model.WordsJson);
-                const UNLOCKED_WORDS = new Set(@Html.Raw(Model.UnlockedWordSetJson));
+                    const TRIGGER_WORDS = @Html.Raw(Model.WordsJson);
+                    const UNLOCKED_WORDS = new Set(@Html.Raw(Model.UnlockedWordSetJson));
     </script>
     <script src="~/js/projector.js" asp-append-version="true"></script>
 }
