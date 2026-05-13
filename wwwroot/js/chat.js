@@ -8,6 +8,7 @@ const messageInput      = document.getElementById("message-input");
 const sendBtn           = document.getElementById("send-btn");
 const charCounter       = document.getElementById("char-counter");
 const MAX_LENGTH       = 256;
+const MAX_MESSAGES     = 50;  // Max synliga meddelanden i chatt-vyn
 
 function updateCharCounter() {
     const remaining = MAX_LENGTH - messageInput.value.length;
@@ -404,6 +405,11 @@ function addMessage(username, text, isHighlighted, timestamp = null) {
     wrapper.appendChild(avatar);
     wrapper.appendChild(body);
     messagesInner.appendChild(wrapper);
+
+    // Ta bort äldsta meddelandet om vi passerar maxgränsen
+    while (messagesInner.children.length > MAX_MESSAGES) {
+        messagesInner.removeChild(messagesInner.firstChild);
+    }
 
     onNewMessage();
 }
