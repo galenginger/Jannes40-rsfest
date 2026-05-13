@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 using DanneFest.Models;
 using DanneFest.Services;
+using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.SignalR;
 
 namespace DanneFest.Hubs;
@@ -37,15 +38,12 @@ public class ChatHub : Hub
 
         if (httpContext != null)
         {
-            try
+            var session = httpContext.Features.Get<ISessionFeature>()?.Session;
+            if (session != null)
             {
-                await httpContext.Session.LoadAsync();
-                username = httpContext.Session.GetString("username") ?? string.Empty;
-                avatarId = httpContext.Session.GetString("avatar_id") ?? string.Empty;
-            }
-            catch (InvalidOperationException)
-            {
-                // Session kan saknas i vissa proxy/transport-scenarion.
+                await session.LoadAsync();
+                username = session.GetString("username") ?? string.Empty;
+                avatarId = session.GetString("avatar_id") ?? string.Empty;
             }
 
             if (string.IsNullOrWhiteSpace(username))
