@@ -49,7 +49,7 @@ async function loadHistory(sinceDate) {
     try {
         const history = await connection.invoke("GetHistory", sinceDate);
         if (history && history.length > 0) {
-            history.forEach(msg => addProjMessage(msg.username, msg.text, msg.isHighlighted, msg.avatarId, msg.timestamp));
+            history.forEach(msg => addProjMessage(msg.username, msg.text, msg.isHighlighted, msg.avatarId, msg.timestamp, msg.isAnnouncement === true));
         }
     } catch (err) {
         console.error("GetHistory (projector) misslyckades:", err);
@@ -71,9 +71,9 @@ async function startConnection() {
     }
 }
 
-connection.on("ReceiveMessage", (username, text, isHighlighted, avatarId, triggers, timestamp) => {
+connection.on("ReceiveMessage", (username, text, isHighlighted, avatarId, triggers, timestamp, isAnnouncement = false) => {
     lastMessageTime = timestamp;
-    addProjMessage(username, text, isHighlighted, avatarId, timestamp);
+    addProjMessage(username, text, isHighlighted, avatarId, timestamp, isAnnouncement);
 
     if (triggers.totalUnlockedWords !== undefined) {
         projWordsEl.textContent  = triggers.totalUnlockedWords;
@@ -152,7 +152,7 @@ window.addEventListener("pageshow", () => {
 });
 
 // Lägger till ett nytt meddelande i projektor-vyn och tar bort gamla om det blir för många
-function addProjMessage(username, text, isHighlighted, avatarId = null, timestamp = null) {
+function addProjMessage(username, text, isHighlighted, avatarId = null, timestamp = null, isAnnouncement = false) {
     const msg = document.createElement("div");
     msg.className = "proj-message" + (isHighlighted ? " highlighted" : "");
 
@@ -161,10 +161,14 @@ function addProjMessage(username, text, isHighlighted, avatarId = null, timestam
 
     const avatarEl = document.createElement("div");
     avatarEl.className = "proj-message-avatar";
-    const avatarImg = document.createElement("img");
-    avatarImg.src = generateAvatar(username, 42, avatarId);
-    avatarImg.alt = username.charAt(0).toUpperCase();
-    avatarEl.appendChild(avatarImg);
+    if (isAnnouncement) {
+        avatarEl.textContent = "📢";
+    } else {
+        const avatarImg = document.createElement("img");
+        avatarImg.src = generateAvatar(username, 42, avatarId);
+        avatarImg.alt = username.charAt(0).toUpperCase();
+        avatarEl.appendChild(avatarImg);
+    }
 
     const nameEl = document.createElement("div");
     nameEl.className = "proj-message-name";

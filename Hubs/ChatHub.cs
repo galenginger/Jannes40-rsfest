@@ -7,6 +7,10 @@ namespace DanneFest.Hubs;
 
 public class ChatHub : Hub
 {
+    private const string AnnouncementPrefix = "/!";
+    private const string AnnouncementUsername = "VMA";
+    private const string AnnouncementAvatarId = "announcement-megaphone";
+
     private sealed class ConnectedUser
     {
         public string Username { get; init; } = string.Empty;
@@ -120,24 +124,35 @@ public class ChatHub : Hub
         text = text.Trim();
         if (string.IsNullOrWhiteSpace(text) || text.Length > 256) return;
 
-        var triggerResult = _triggerService.CheckMessage(text);
-        var isHighlighted = _triggerService.IsHighlightedUser(username);
-        var timestamp = DateTime.UtcNow;
+        var isAnnouncement = text.StartsWith(AnnouncementPrefix, StringComparison.Ordinal);
+        if (isAnnouncement)
+        {
+            text = text[AnnouncementPrefix.Length..].TrimStart();
+            if (string.IsNullOrWhiteSpace(text))
+                return;
+        }
 
-        await Clients.All.SendAsync("ReceiveMessage", username, text, isHighlighted, avatarId, new
+        var triggerResult = _triggerService.CheckMessage(text);
+        var isHighlighted = isAnnouncement || _triggerService.IsHighlightedUser(username);
+        var timestamp = DateTime.UtcNow;
+        var displayUsername = isAnnouncement ? AnnouncementUsername : username;
+        var displayAvatarId = isAnnouncement ? AnnouncementAvatarId : avatarId;
+
+        await Clients.All.SendAsync("ReceiveMessage", displayUsername, text, isHighlighted, displayAvatarId, new
         {
             newWords = triggerResult.NewlyUnlockedWords.Select(w => new { w.Word, w.Emoji }).ToList(),
             newCombos = triggerResult.NewlyUnlockedCombos.Select(c => new { c.Description, c.Emoji }).ToList(),
             totalUnlockedWords = triggerResult.TotalUnlockedWords,
             totalUnlockedCombos = triggerResult.TotalUnlockedCombos
-        }, timestamp.ToString("O"));
+        }, timestamp.ToString("O"), isAnnouncement);
 
         _historyService.Add(new MessageRecord
         {
-            Username = username,
-            AvatarId = avatarId,
+            Username = displayUsername,
+            AvatarId = displayAvatarId,
             Text = text,
             IsHighlighted = isHighlighted,
+            IsAnnouncement = isAnnouncement,
             Timestamp = timestamp
         });
     }

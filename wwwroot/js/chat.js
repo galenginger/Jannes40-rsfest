@@ -254,7 +254,7 @@ async function loadHistory(sinceDate) {
             // Historiken kommer i kronologisk ordning från servern.
             // Rendera i samma ordning så nyaste hamnar längst ner, precis som live-meddelanden.
             history.forEach(msg => {
-                addMessage(msg.username, msg.text, msg.isHighlighted, msg.avatarId, msg.timestamp);
+                addMessage(msg.username, msg.text, msg.isHighlighted, msg.avatarId, msg.timestamp, msg.isAnnouncement === true);
             });
         }
     } catch (err) {
@@ -301,9 +301,9 @@ window.addEventListener("pageshow", () => {
     }
 });
 
-connection.on("ReceiveMessage", (username, text, isHighlighted, avatarId, triggers, timestamp) => {
+connection.on("ReceiveMessage", (username, text, isHighlighted, avatarId, triggers, timestamp, isAnnouncement = false) => {
     lastMessageTime = timestamp;
-    addMessage(username, text, isHighlighted, avatarId, timestamp);
+    addMessage(username, text, isHighlighted, avatarId, timestamp, isAnnouncement);
 
     if (triggers.totalUnlockedWords !== undefined) {
         updateCounters(triggers.totalUnlockedWords, triggers.totalUnlockedCombos);
@@ -421,17 +421,19 @@ function sendMessage() {
 
 // ===== Hjälpfunktioner =====
 
-function addMessage(username, text, isHighlighted, avatarId = null, timestamp = null) {
+function addMessage(username, text, isHighlighted, avatarId = null, timestamp = null, isAnnouncement = false) {
     const isOwn = username === MY_NAME;
     const previousMessage = findLastMessageElement();
     const isCompact = previousMessage
         && previousMessage.dataset.kind === "chat"
-        && previousMessage.dataset.username === username;
+        && previousMessage.dataset.username === username
+        && !isAnnouncement;
 
     const wrapper = document.createElement("div");
     wrapper.className = "message"
         + (isOwn ? " own" : "")
         + (isHighlighted ? " highlighted" : "")
+        + (isAnnouncement ? " message-announcement" : "")
         + (isCompact ? " message-compact" : "");
     wrapper.dataset.kind = "chat";
     wrapper.dataset.username = username;
@@ -451,11 +453,18 @@ function addMessage(username, text, isHighlighted, avatarId = null, timestamp = 
 
     const avatar = document.createElement("div");
     avatar.className = "message-avatar";
-    const avatarImg = document.createElement("img");
-    const effectiveAvatarId = avatarId || (isOwn ? MY_AVATAR_ID : "");
-    avatarImg.src = generateAvatar(username, 36, effectiveAvatarId);
-    avatarImg.alt = username.charAt(0).toUpperCase();
-    avatar.appendChild(avatarImg);
+    if (isAnnouncement) {
+        avatar.classList.add("announcement-avatar");
+        avatar.textContent = "📢";
+        avatar.setAttribute("aria-label", "Announcement");
+        avatar.setAttribute("title", "Announcement");
+    } else {
+        const avatarImg = document.createElement("img");
+        const effectiveAvatarId = avatarId || (isOwn ? MY_AVATAR_ID : "");
+        avatarImg.src = generateAvatar(username, 36, effectiveAvatarId);
+        avatarImg.alt = username.charAt(0).toUpperCase();
+        avatar.appendChild(avatarImg);
+    }
 
     const body = document.createElement("div");
     body.className = "message-body";

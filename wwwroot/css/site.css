@@ -695,6 +695,16 @@ html, body {
     display: block;
 }
 
+.message-avatar.announcement-avatar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.35rem;
+    border: 1px solid var(--accent);
+    background: rgba(247, 183, 49, 0.16);
+    border-radius: 4px;
+}
+
 .message-body { display: flex; flex-direction: column; gap: 0.2rem; min-width: 0; }
 
 .message-meta {
@@ -752,6 +762,34 @@ html, body {
     border-color: var(--accent2);
     border-radius: 12px 12px 2px 12px;
     box-shadow: 0 0 0 1px rgba(232, 67, 147, 0.25), inset 0 0 12px rgba(232, 67, 147, 0.06);
+}
+
+.message.message-announcement {
+    max-width: 96%;
+}
+
+.message.message-announcement .message-meta {
+    color: #ffd86c;
+    letter-spacing: 0.08em;
+    font-weight: 800;
+}
+
+.message.message-announcement .message-time {
+    color: #ffd86c;
+    opacity: 0.85;
+}
+
+.message.message-announcement .message-bubble {
+    border-radius: 0;
+    border: 2px solid #ffd86c;
+    background: linear-gradient(135deg, rgba(247, 183, 49, 0.24), rgba(247, 183, 49, 0.08));
+    box-shadow: 0 0 0 1px rgba(247, 183, 49, 0.35), 0 8px 22px rgba(247, 183, 49, 0.12);
+    font-size: 1.02rem;
+    font-weight: 700;
+}
+
+.message.own.message-announcement .message-content {
+    flex-direction: row;
 }
 
 /* ===== Join-meddelanden ===== */
