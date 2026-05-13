@@ -124,6 +124,7 @@ function buildHeaderWords() {
 }
 
 function addHeaderWordChip(word, emoji, animate) {
+    if (!headerUnlockedWords) return;
     const id = "hw-" + word.toLowerCase().replace(/\s+/g, "-");
     if (document.getElementById(id)) return;
     const span = document.createElement("span");
@@ -150,9 +151,10 @@ const isBraveBrowser = !!navigator.brave;
 const signalrTransportOptions = isBraveBrowser
     ? { transport: signalR.HttpTransportType.LongPolling }
     : undefined;
+const hubUrl = `${SIGNALR_URL}${SIGNALR_URL.includes("?") ? "&" : "?"}username=${encodeURIComponent(MY_NAME)}`;
 
 const connection = new signalR.HubConnectionBuilder()
-    .withUrl(SIGNALR_URL, signalrTransportOptions)
+    .withUrl(hubUrl, signalrTransportOptions)
     .withAutomaticReconnect({ nextRetryDelayInMilliseconds: () => 2000 })
     .build();
 
@@ -389,8 +391,8 @@ function addMessage(username, text, isHighlighted, timestamp = null) {
 }
 
 function updateCounters(words, combos) {
-    unlockedWordsEl.textContent = words;
-    unlockedCombosEl.textContent = combos;
+    if (unlockedWordsEl) unlockedWordsEl.textContent = words;
+    if (unlockedCombosEl) unlockedCombosEl.textContent = combos;
     if (sbWordsEl)  sbWordsEl.textContent = words;
     if (sbCombosEl) sbCombosEl.textContent = combos;
     bumpCounter("word-counter");
@@ -399,6 +401,7 @@ function updateCounters(words, combos) {
 
 function bumpCounter(id) {
     const el = document.getElementById(id);
+    if (!el) return;
     el.classList.remove("bump");
     void el.offsetWidth;
     el.classList.add("bump");
@@ -525,6 +528,7 @@ function graphemeLength(str) {
 }
 
 (function buildEmojiPicker() {
+    if (!emojiPicker || !emojiBtn) return;
     EMOJIS.forEach(emoji => {
         const btn = document.createElement("button");
         btn.className = "emoji-item";
@@ -545,13 +549,15 @@ function graphemeLength(str) {
     });
 })();
 
-emojiBtn.addEventListener("click", (e) => {
-    e.stopPropagation();
-    emojiPicker.classList.toggle("open");
-});
+if (emojiBtn && emojiPicker) {
+    emojiBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        emojiPicker.classList.toggle("open");
+    });
 
-document.addEventListener("click", () => {
-    emojiPicker.classList.remove("open");
-});
+    document.addEventListener("click", () => {
+        emojiPicker.classList.remove("open");
+    });
 
-emojiPicker.addEventListener("click", (e) => e.stopPropagation());
+    emojiPicker.addEventListener("click", (e) => e.stopPropagation());
+}

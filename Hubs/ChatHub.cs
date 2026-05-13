@@ -25,11 +25,32 @@ public class ChatHub : Hub
     public override async Task OnConnectedAsync()
     {
         var httpContext = Context.GetHttpContext();
+        var username = string.Empty;
+
         if (httpContext != null)
         {
-            await httpContext.Session.LoadAsync();
-            var username = httpContext.Session.GetString("username") ?? string.Empty;
-            _connectionUsers[Context.ConnectionId] = username;
+            try
+            {
+                await httpContext.Session.LoadAsync();
+                username = httpContext.Session.GetString("username") ?? string.Empty;
+            }
+            catch (InvalidOperationException)
+            {
+                // Session kan saknas i vissa proxy/transport-scenarion.
+            }
+
+            if (string.IsNullOrWhiteSpace(username))
+            {
+                username = httpContext.Request.Query["username"].ToString();
+            }
+
+            if (!string.IsNullOrWhiteSpace(username))
+            {
+                username = username.Trim();
+                if (username.Length > 40)
+                    username = username[..40];
+                _connectionUsers[Context.ConnectionId] = username;
+            }
         }
 
         await Clients.Caller.SendAsync("UpdateCounters", new
