@@ -1,15 +1,22 @@
 // projector.js — projektor-läge, tar emot meddelanden men kan inte skicka
 // Visar meddelanden i ett stort rullande flöde för visning på storskärm/projektor
 
-const projMessages = document.getElementById("projector-messages");
+const projColLeft = document.getElementById("projector-col-left");
+const projColMid = document.getElementById("projector-col-mid");
+const projColRight = document.getElementById("projector-col-right");
 const projWordsEl = document.getElementById("proj-words");
 const projCombosEl = document.getElementById("proj-combos");
 const projParticipantsEl = document.getElementById("proj-participants");
 const triggerOverlay = document.getElementById("trigger-overlay");
 const triggerPopup = document.getElementById("trigger-popup");
 
-// Max antal synliga meddelanden i projektor-vyn (äldre tas bort)
-const MAX_MESSAGES = 30;
+// Tre kolumner: nyast till höger, sedan mitten, sedan vänster (äldst).
+const RIGHT_COLUMN_CAPACITY = 8;
+const MIDDLE_COLUMN_CAPACITY = 18;
+const LEFT_COLUMN_CAPACITY = 16;
+const MAX_MESSAGES = RIGHT_COLUMN_CAPACITY + MIDDLE_COLUMN_CAPACITY + LEFT_COLUMN_CAPACITY;
+
+const projectorMessageBuffer = [];
 
 const isBraveBrowser = !!navigator.brave;
 const signalrTransportOptions = isBraveBrowser
@@ -153,30 +160,80 @@ window.addEventListener("pageshow", () => {
 
 // Lägger till ett nytt meddelande i projektor-vyn och tar bort gamla om det blir för många
 function addProjMessage(username, text, isHighlighted, avatarId = null, timestamp = null, isAnnouncement = false) {
+    projectorMessageBuffer.push({
+        username,
+        text,
+        isHighlighted,
+        avatarId,
+        timestamp: timestamp || new Date().toISOString(),
+        isAnnouncement
+    });
+
+    while (projectorMessageBuffer.length > MAX_MESSAGES) {
+        projectorMessageBuffer.shift();
+    }
+
+    renderProjectorColumns();
+}
+
+function renderProjectorColumns() {
+    const right = projectorMessageBuffer.slice(-RIGHT_COLUMN_CAPACITY);
+    const beforeRight = projectorMessageBuffer.slice(0, Math.max(0, projectorMessageBuffer.length - right.length));
+
+    const middle = beforeRight.slice(-MIDDLE_COLUMN_CAPACITY);
+    const beforeMiddle = beforeRight.slice(0, Math.max(0, beforeRight.length - middle.length));
+
+    const left = beforeMiddle.slice(-LEFT_COLUMN_CAPACITY);
+
+    renderColumn(projColRight, right, "proj-age-new", RIGHT_COLUMN_CAPACITY);
+    renderColumn(projColMid, middle, "proj-age-mid", MIDDLE_COLUMN_CAPACITY);
+    renderColumn(projColLeft, left, "proj-age-old", LEFT_COLUMN_CAPACITY);
+}
+
+function renderColumn(columnEl, messages, ageClass, capacity) {
+    if (!columnEl) return;
+    columnEl.innerHTML = "";
+
+    const emptySlots = Math.max(0, capacity - messages.length);
+    for (let i = 0; i < emptySlots; i++) {
+        const empty = document.createElement("div");
+        empty.className = "proj-slot-empty";
+        columnEl.appendChild(empty);
+    }
+
+    messages.forEach(message => {
+        columnEl.appendChild(createProjMessageElement(message, ageClass));
+    });
+}
+
+function createProjMessageElement(message, ageClass) {
     const msg = document.createElement("div");
-    msg.className = "proj-message" + (isHighlighted ? " highlighted" : "");
+    msg.className = "proj-message"
+        + (message.isHighlighted ? " highlighted" : "")
+        + (message.isAnnouncement ? " proj-announcement" : "")
+        + " " + ageClass;
 
     const header = document.createElement("div");
     header.className = "proj-message-header";
 
     const avatarEl = document.createElement("div");
     avatarEl.className = "proj-message-avatar";
-    if (isAnnouncement) {
+    if (message.isAnnouncement) {
         avatarEl.textContent = "📢";
     } else {
         const avatarImg = document.createElement("img");
-        avatarImg.src = generateAvatar(username, 42, avatarId);
-        avatarImg.alt = username.charAt(0).toUpperCase();
+        avatarImg.src = generateAvatar(message.username, 42, message.avatarId);
+        avatarImg.alt = message.username.charAt(0).toUpperCase();
         avatarEl.appendChild(avatarImg);
     }
 
     const nameEl = document.createElement("div");
     nameEl.className = "proj-message-name";
-    nameEl.textContent = username;
+    nameEl.textContent = message.username;
 
     const timeEl = document.createElement("span");
     timeEl.className = "proj-message-time";
-    timeEl.textContent = new Date(timestamp || Date.now()).toLocaleTimeString("sv-SE", { hour: "2-digit", minute: "2-digit" });
+    timeEl.textContent = new Date(message.timestamp || Date.now()).toLocaleTimeString("sv-SE", { hour: "2-digit", minute: "2-digit" });
 
     header.appendChild(avatarEl);
     header.appendChild(nameEl);
@@ -184,18 +241,11 @@ function addProjMessage(username, text, isHighlighted, avatarId = null, timestam
 
     const textEl = document.createElement("div");
     textEl.className = "proj-message-text";
-    applyWordHighlights(textEl, text);
+    applyWordHighlights(textEl, message.text);
 
     msg.appendChild(header);
     msg.appendChild(textEl);
-
-    // Nyaste meddelandet längst upp till vänster i griden
-    projMessages.insertBefore(msg, projMessages.firstChild);
-
-    // Ta bort äldsta meddelandet (längst ner) om vi passerar maxgränsen
-    while (projMessages.children.length > MAX_MESSAGES) {
-        projMessages.removeChild(projMessages.lastChild);
-    }
+    return msg;
 }
 
 function showTriggerUnlock(emoji, title, isCombo) {
@@ -241,40 +291,7 @@ function randomJoinColor() {
 }
 
 function addProjJoinMessage(username, avatarId = null) {
-    const msg = document.createElement("div");
-    msg.className = "proj-message join-message";
-
-    const header = document.createElement("div");
-    header.className = "proj-message-header";
-
-    const avatarEl = document.createElement("div");
-    avatarEl.className = "proj-message-avatar";
-    const avatarImg = document.createElement("img");
-    avatarImg.src = generateAvatar(username, 42, avatarId);
-    avatarImg.alt = username.charAt(0).toUpperCase();
-    avatarEl.appendChild(avatarImg);
-
-    const nameEl = document.createElement("div");
-    nameEl.className = "proj-message-name";
-    nameEl.textContent = username;
-
-    header.appendChild(avatarEl);
-    header.appendChild(nameEl);
-
-    const c = randomJoinColor();
-    const textEl = document.createElement("div");
-    textEl.className = "proj-message-text join-bubble";
-    textEl.style.color       = c.color;
-    textEl.style.background  = c.background;
-    textEl.style.borderColor = c.border;
-    textEl.textContent = "Är med på festen!";
-
-    msg.appendChild(header);
-    msg.appendChild(textEl);
-    projMessages.insertBefore(msg, projMessages.firstChild);
-
-    while (projMessages.children.length > MAX_MESSAGES)
-        projMessages.removeChild(projMessages.lastChild);
+    addProjMessage(username, "Är med på festen!", false, avatarId, new Date().toISOString(), false);
 }
 
 function applyWordHighlights(container, text) {

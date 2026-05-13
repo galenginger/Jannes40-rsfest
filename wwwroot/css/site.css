@@ -1014,25 +1014,56 @@ html, body {
 .projector-feed {
     flex: 1;
     overflow: hidden;
-    padding: 0.6rem 0.8rem;
+    padding: 0.65rem 0.85rem 0.85rem;
     display: flex;
 }
 
-#projector-messages {
+.projector-columns {
     flex: 1;
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-    gap: 0.45rem;
-    align-content: start;
+    grid-template-columns: 0.7fr 0.88fr 1fr;
+    gap: 0.6rem;
     overflow: hidden;
+}
+
+.projector-column {
+    display: grid;
+    align-content: end;
+    gap: 0.22rem;
+    min-width: 0;
+    overflow: hidden;
+    padding: 0.2rem 0.25rem 0.15rem;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 8px;
+}
+
+.projector-column-new {
+    grid-template-rows: repeat(8, minmax(0, 1fr));
+    background: linear-gradient(180deg, rgba(247, 183, 49, 0.06), rgba(247, 183, 49, 0.02));
+}
+
+.projector-column-mid {
+    grid-template-rows: repeat(18, minmax(0, 1fr));
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.035), rgba(255, 255, 255, 0.015));
+}
+
+.projector-column-old {
+    grid-template-rows: repeat(16, minmax(0, 1fr));
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0.01));
+}
+
+.proj-slot-empty {
+    min-height: 0;
 }
 
 .proj-message {
     background: rgba(255,255,255,0.05);
     border-left: 3px solid var(--accent);
     border-radius: 0 8px 8px 0;
-    padding: 0.35rem 0.6rem;
+    padding: 0.14rem 0.26rem;
     animation: fadein 0.3s ease;
+    min-height: 0;
+    overflow: hidden;
 }
 
 .proj-message.highlighted {
@@ -1051,6 +1082,41 @@ html, body {
     font-size: clamp(1rem, 1.8vw, 1.3rem);
 }
 
+.proj-announcement {
+    border-left-width: 4px;
+    border-left-color: #ffd86c;
+    background: linear-gradient(90deg, rgba(247, 183, 49, 0.22), rgba(247, 183, 49, 0.08));
+}
+
+.proj-announcement .proj-message-text {
+    -webkit-line-clamp: 3;
+}
+
+.proj-age-mid.proj-announcement .proj-message-text {
+    -webkit-line-clamp: 2;
+}
+
+.proj-age-old.proj-announcement .proj-message-text {
+    -webkit-line-clamp: 2;
+}
+
+.proj-announcement .proj-message-avatar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    border: 1px solid rgba(255, 216, 108, 0.5);
+    border-radius: 4px;
+}
+
+.proj-age-mid.proj-announcement .proj-message-avatar {
+    font-size: 0.55rem;
+}
+
+.proj-age-old.proj-announcement .proj-message-avatar {
+    font-size: 0.45rem;
+}
+
 @keyframes slideup {
     from { opacity: 0; transform: translateY(20px); }
     to   { opacity: 1; transform: translateY(0); }
@@ -1059,8 +1125,9 @@ html, body {
 .proj-message-header {
     display: flex;
     align-items: center;
-    gap: 0.35rem;
-    margin-bottom: 0.15rem;
+    gap: 0.2rem;
+    margin-bottom: 0.08rem;
+    min-width: 0;
 }
 
 .proj-message-avatar {
@@ -1079,7 +1146,7 @@ html, body {
 }
 
 .proj-message-name {
-    font-size: 0.78rem;
+    font-size: 0.66rem;
     font-weight: 700;
     color: var(--accent);
     white-space: nowrap;
@@ -1089,7 +1156,7 @@ html, body {
 }
 
 .proj-message-time {
-    font-size: 0.9rem;
+    font-size: 0.58rem;
     color: var(--text-muted);
     opacity: 0.6;
     white-space: nowrap;
@@ -1097,11 +1164,67 @@ html, body {
 }
 
 .proj-message-text {
-    font-size: clamp(0.85rem, 1.4vw, 1.1rem);
+    font-size: 0.66rem;
     font-weight: 500;
     color: var(--text);
     word-break: break-word;
-    line-height: 1.3;
+    line-height: 1.1;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+}
+
+/* Nyast till höger */
+.proj-age-new {
+    opacity: 1;
+}
+
+/* Mitten: mindre text, lite blekare */
+.proj-age-mid {
+    opacity: 0.82;
+}
+
+.proj-age-mid .proj-message-name {
+    font-size: 0.56rem;
+}
+
+.proj-age-mid .proj-message-time {
+    font-size: 0.5rem;
+}
+
+.proj-age-mid .proj-message-text {
+    font-size: 0.56rem;
+    -webkit-line-clamp: 1;
+}
+
+.proj-age-mid .proj-message-avatar {
+    width: 14px;
+    height: 14px;
+}
+
+/* Äldst till vänster: ännu mindre text + tydligare fade */
+.proj-age-old {
+    opacity: 0.62;
+}
+
+.proj-age-old .proj-message-name {
+    font-size: 0.5rem;
+}
+
+.proj-age-old .proj-message-time {
+    font-size: 0.45rem;
+}
+
+.proj-age-old .proj-message-text {
+    font-size: 0.5rem;
+    line-height: 1.05;
+    -webkit-line-clamp: 1;
+}
+
+.proj-age-old .proj-message-avatar {
+    width: 12px;
+    height: 12px;
 }
 
 .projector-popup { padding: 2rem 4rem; }
