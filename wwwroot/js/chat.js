@@ -423,9 +423,18 @@ function sendMessage() {
 
 function addMessage(username, text, isHighlighted, avatarId = null, timestamp = null) {
     const isOwn = username === MY_NAME;
+    const previousMessage = findLastMessageElement();
+    const isCompact = previousMessage
+        && previousMessage.dataset.kind === "chat"
+        && previousMessage.dataset.username === username;
 
     const wrapper = document.createElement("div");
-    wrapper.className = "message" + (isOwn ? " own" : "") + (isHighlighted ? " highlighted" : "");
+    wrapper.className = "message"
+        + (isOwn ? " own" : "")
+        + (isHighlighted ? " highlighted" : "")
+        + (isCompact ? " message-compact" : "");
+    wrapper.dataset.kind = "chat";
+    wrapper.dataset.username = username;
 
     const content = document.createElement("div");
     content.className = "message-content";
@@ -533,6 +542,7 @@ function randomJoinColor() {
 function addJoinMessage(username, avatarId = null) {
     const wrapper = document.createElement("div");
     wrapper.className = "message join-message";
+    wrapper.dataset.kind = "join";
 
     const content = document.createElement("div");
     content.className = "message-content";
@@ -603,6 +613,17 @@ function escapeHtml(str) {
 
 function formatTime(date) {
     return date.toLocaleTimeString("sv-SE", { hour: "2-digit", minute: "2-digit" });
+}
+
+function findLastMessageElement() {
+    let el = messagesInner.lastElementChild;
+    while (el) {
+        if (el.classList && el.classList.contains("message")) {
+            return el;
+        }
+        el = el.previousElementSibling;
+    }
+    return null;
 }
 
 // ===== Emoji-picker =====

@@ -714,6 +714,20 @@ html, body {
     justify-content: flex-end;
 }
 
+.message-compact .message-meta-row,
+.message-compact .message-side {
+    display: none;
+}
+
+.message-compact .message-content {
+    padding-left: calc(36px + 0.6rem);
+}
+
+.message.own.message-compact .message-content {
+    padding-left: 0;
+    padding-right: calc(36px + 0.6rem);
+}
+
 .message.own .message-meta { text-align: right; }
 
 .message-time {
