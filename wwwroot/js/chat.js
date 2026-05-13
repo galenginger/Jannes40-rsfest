@@ -427,6 +427,19 @@ function addMessage(username, text, isHighlighted, avatarId = null, timestamp = 
     const wrapper = document.createElement("div");
     wrapper.className = "message" + (isOwn ? " own" : "") + (isHighlighted ? " highlighted" : "");
 
+    const content = document.createElement("div");
+    content.className = "message-content";
+
+    const side = document.createElement("div");
+    side.className = "message-side";
+
+    const metaRow = document.createElement("div");
+    metaRow.className = "message-meta-row";
+
+    const meta = document.createElement("div");
+    meta.className = "message-meta";
+    meta.textContent = isOwn ? "Du" : username;
+
     const avatar = document.createElement("div");
     avatar.className = "message-avatar";
     const avatarImg = document.createElement("img");
@@ -438,10 +451,6 @@ function addMessage(username, text, isHighlighted, avatarId = null, timestamp = 
     const body = document.createElement("div");
     body.className = "message-body";
 
-    const meta = document.createElement("div");
-    meta.className = "message-meta";
-    meta.textContent = isOwn ? "Du" : username;
-
     const bubble = document.createElement("div");
     bubble.className = "message-bubble";
     applyWordHighlights(bubble, text);
@@ -450,11 +459,14 @@ function addMessage(username, text, isHighlighted, avatarId = null, timestamp = 
     time.className = "message-time";
     time.textContent = formatTime(timestamp ? new Date(timestamp) : new Date());
 
-    body.appendChild(meta);
+    metaRow.appendChild(meta);
+    metaRow.appendChild(time);
+    side.appendChild(avatar);
     body.appendChild(bubble);
-    body.appendChild(time);
-    wrapper.appendChild(avatar);
-    wrapper.appendChild(body);
+    content.appendChild(side);
+    content.appendChild(body);
+    wrapper.appendChild(metaRow);
+    wrapper.appendChild(content);
     messagesInner.appendChild(wrapper);
 
     // Ta bort äldsta meddelandet om vi passerar maxgränsen
@@ -522,6 +534,19 @@ function addJoinMessage(username, avatarId = null) {
     const wrapper = document.createElement("div");
     wrapper.className = "message join-message";
 
+    const content = document.createElement("div");
+    content.className = "message-content";
+
+    const side = document.createElement("div");
+    side.className = "message-side";
+
+    const metaRow = document.createElement("div");
+    metaRow.className = "message-meta-row";
+
+    const meta = document.createElement("div");
+    meta.className = "message-meta";
+    meta.textContent = username;
+
     const avatar = document.createElement("div");
     avatar.className = "message-avatar";
     const avatarImg = document.createElement("img");
@@ -532,10 +557,6 @@ function addJoinMessage(username, avatarId = null) {
     const body = document.createElement("div");
     body.className = "message-body";
 
-    const meta = document.createElement("div");
-    meta.className = "message-meta";
-    meta.textContent = username;
-
     const c = randomJoinColor();
     const bubble = document.createElement("div");
     bubble.className = "message-bubble join-bubble";
@@ -544,10 +565,13 @@ function addJoinMessage(username, avatarId = null) {
     bubble.style.borderColor     = c.border;
     bubble.textContent = "Är med på festen!";
 
-    body.appendChild(meta);
+    metaRow.appendChild(meta);
+    side.appendChild(avatar);
     body.appendChild(bubble);
-    wrapper.appendChild(avatar);
-    wrapper.appendChild(body);
+    content.appendChild(side);
+    content.appendChild(body);
+    wrapper.appendChild(metaRow);
+    wrapper.appendChild(content);
     messagesInner.appendChild(wrapper);
     messagesContainer.scrollTop = messagesContainer.scrollHeight;
 }

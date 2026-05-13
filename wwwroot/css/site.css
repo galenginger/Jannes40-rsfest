@@ -639,9 +639,11 @@ html, body {
 
 .message {
     display: flex;
-    gap: 0.6rem;
+    flex-direction: column;
+    gap: 0.22rem;
     max-width: 80%;
     animation: fadein 0.25s ease;
+    min-width: 0;
 }
 
 @keyframes fadein {
@@ -651,7 +653,31 @@ html, body {
 
 .message.own {
     align-self: flex-end;
+}
+
+.message-content {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    min-width: 0;
+}
+
+.message.own .message-content {
     flex-direction: row-reverse;
+}
+
+.message-side {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.2rem;
+    flex-shrink: 0;
+    width: 36px;
+}
+
+.message.own .message-side {
+    align-items: center;
 }
 
 .message-avatar {
@@ -669,11 +695,23 @@ html, body {
     display: block;
 }
 
-.message-body { display: flex; flex-direction: column; gap: 0.2rem; }
+.message-body { display: flex; flex-direction: column; gap: 0.2rem; min-width: 0; }
 
 .message-meta {
     font-size: 0.75rem;
     color: var(--text-muted);
+    white-space: nowrap;
+}
+
+.message-meta-row {
+    display: flex;
+    align-items: baseline;
+    gap: 0.35rem;
+    min-width: 0;
+}
+
+.message.own .message-meta-row {
+    justify-content: flex-end;
 }
 
 .message.own .message-meta { text-align: right; }
@@ -682,10 +720,9 @@ html, body {
     font-size: 0.68rem;
     color: var(--text-muted);
     opacity: 0.6;
-    margin-top: 0.1rem;
+    margin-top: 0;
+    flex-shrink: 0;
 }
-
-.message.own .message-time { text-align: right; }
 
 .message-bubble {
     background: var(--bg-card);
