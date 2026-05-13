@@ -177,29 +177,99 @@ function addProjMessage(username, text, isHighlighted, avatarId = null, timestam
 }
 
 function renderProjectorColumns() {
-    const right = projectorMessageBuffer.slice(-RIGHT_COLUMN_CAPACITY);
-    const beforeRight = projectorMessageBuffer.slice(0, Math.max(0, projectorMessageBuffer.length - right.length));
+    // Mäta kolumnernas totala höjd
+    const rightHeight = projColRight.clientHeight;
+    const midHeight = projColMid.clientHeight;
+    const leftHeight = projColLeft.clientHeight;
 
-    const middle = beforeRight.slice(-MIDDLE_COLUMN_CAPACITY);
-    const beforeMiddle = beforeRight.slice(0, Math.max(0, beforeRight.length - middle.length));
+    // Räkna ut ungefärlig tillgänglig höjd (minus padding/gap)
+    const rightAvailable = rightHeight - 20;
+    const midAvailable = midHeight - 20;
+    const leftAvailable = leftHeight - 20;
 
-    const left = beforeMiddle.slice(-LEFT_COLUMN_CAPACITY);
+    // Skapa temp-containrar för att mäta höjd på varje meddelande med rätt class
+    const tempRight = document.createElement("div");
+    const tempMid = document.createElement("div");
+    const tempLeft = document.createElement("div");
+    
+    for (let container of [tempRight, tempMid, tempLeft]) {
+        container.style.position = "absolute";
+        container.style.visibility = "hidden";
+        container.style.width = projColRight.clientWidth + "px";
+        container.className = "projector-column";
+        document.body.appendChild(container);
+    }
 
-    renderColumn(projColRight, right, "proj-age-new", RIGHT_COLUMN_CAPACITY);
-    renderColumn(projColMid, middle, "proj-age-mid", MIDDLE_COLUMN_CAPACITY);
-    renderColumn(projColLeft, left, "proj-age-old", LEFT_COLUMN_CAPACITY);
+    // Mäta höjd på varje meddelande i varje kolumn-kontext
+    const rightHeights = projectorMessageBuffer.map(msg => {
+        const elem = createProjMessageElement(msg, "proj-age-new");
+        tempRight.appendChild(elem);
+        const height = elem.offsetHeight;
+        tempRight.removeChild(elem);
+        return height;
+    });
+
+    const midHeights = projectorMessageBuffer.map(msg => {
+        const elem = createProjMessageElement(msg, "proj-age-mid");
+        tempMid.appendChild(elem);
+        const height = elem.offsetHeight;
+        tempMid.removeChild(elem);
+        return height;
+    });
+
+    const leftHeights = projectorMessageBuffer.map(msg => {
+        const elem = createProjMessageElement(msg, "proj-age-old");
+        tempLeft.appendChild(elem);
+        const height = elem.offsetHeight;
+        tempLeft.removeChild(elem);
+        return height;
+    });
+
+    document.body.removeChild(tempRight);
+    document.body.removeChild(tempMid);
+    document.body.removeChild(tempLeft);
+
+    // Distribuera meddelanden från nyast bakåt med STRIKT ordning: höger → mitten → vänster
+    let rightMessages = [];
+    let midMessages = [];
+    let leftMessages = [];
+
+    let rightUsed = 0;
+    let midUsed = 0;
+    let leftUsed = 0;
+
+    const gap = 6; // gap mellan meddelanden i CSS
+
+    for (let i = projectorMessageBuffer.length - 1; i >= 0; i--) {
+        const msg = projectorMessageBuffer[i];
+        const rightH = rightHeights[i] + gap;
+        const midH = midHeights[i] + gap;
+        const leftH = leftHeights[i] + gap;
+
+        // MÅSTE fylla höger först, sedan mitten, sedan vänster
+        if (rightUsed + rightH <= rightAvailable) {
+            rightMessages.unshift(msg);
+            rightUsed += rightH;
+        } else if (midUsed + midH <= midAvailable) {
+            // Bara om höger är fullt
+            midMessages.unshift(msg);
+            midUsed += midH;
+        } else if (leftUsed + leftH <= leftAvailable) {
+            // Bara om både höger och mitten är fulla
+            leftMessages.unshift(msg);
+            leftUsed += leftH;
+        }
+        // Om ingen plats alls, ignoreras meddelandet (för gammalt)
+    }
+
+    renderColumn(projColRight, rightMessages, "proj-age-new", RIGHT_COLUMN_CAPACITY);
+    renderColumn(projColMid, midMessages, "proj-age-mid", MIDDLE_COLUMN_CAPACITY);
+    renderColumn(projColLeft, leftMessages, "proj-age-old", LEFT_COLUMN_CAPACITY);
 }
 
 function renderColumn(columnEl, messages, ageClass, capacity) {
     if (!columnEl) return;
     columnEl.innerHTML = "";
-
-    const emptySlots = Math.max(0, capacity - messages.length);
-    for (let i = 0; i < emptySlots; i++) {
-        const empty = document.createElement("div");
-        empty.className = "proj-slot-empty";
-        columnEl.appendChild(empty);
-    }
 
     messages.forEach(message => {
         columnEl.appendChild(createProjMessageElement(message, ageClass));

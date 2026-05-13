@@ -1031,24 +1031,25 @@ html, body {
     align-content: end;
     gap: 0.22rem;
     min-width: 0;
-    overflow: hidden;
     padding: 0.2rem 0.25rem 0.15rem;
     border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 8px;
+    max-height: 100%;
+    overflow-y: auto;
 }
 
 .projector-column-new {
-    grid-template-rows: repeat(8, minmax(0, 1fr));
+    grid-template-rows: auto;
     background: linear-gradient(180deg, rgba(247, 183, 49, 0.06), rgba(247, 183, 49, 0.02));
 }
 
 .projector-column-mid {
-    grid-template-rows: repeat(18, minmax(0, 1fr));
+    grid-template-rows: auto;
     background: linear-gradient(180deg, rgba(255, 255, 255, 0.035), rgba(255, 255, 255, 0.015));
 }
 
 .projector-column-old {
-    grid-template-rows: repeat(16, minmax(0, 1fr));
+    grid-template-rows: auto;
     background: linear-gradient(180deg, rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0.01));
 }
 
@@ -1061,8 +1062,6 @@ html, body {
     border-left: 3px solid var(--accent);
     border-radius: 0 8px 8px 0;
     padding: 0.14rem 0.26rem;
-    min-height: 0;
-    overflow: hidden;
 }
 
 .proj-message.highlighted {
@@ -1087,17 +1086,7 @@ html, body {
     background: linear-gradient(90deg, rgba(247, 183, 49, 0.22), rgba(247, 183, 49, 0.08));
 }
 
-.proj-announcement .proj-message-text {
-    -webkit-line-clamp: 3;
-}
 
-.proj-age-mid.proj-announcement .proj-message-text {
-    -webkit-line-clamp: 2;
-}
-
-.proj-age-old.proj-announcement .proj-message-text {
-    -webkit-line-clamp: 2;
-}
 
 .proj-announcement .proj-message-avatar {
     display: flex;
@@ -1145,7 +1134,7 @@ html, body {
 }
 
 .proj-message-name {
-    font-size: 0.66rem;
+    font-size: 0.82rem;
     font-weight: 700;
     color: var(--accent);
     white-space: nowrap;
@@ -1163,15 +1152,11 @@ html, body {
 }
 
 .proj-message-text {
-    font-size: 0.66rem;
+    font-size: 0.82rem;
     font-weight: 500;
     color: var(--text);
     word-break: break-word;
     line-height: 1.1;
-    overflow: hidden;
-    display: -webkit-box;
-    -webkit-box-orient: vertical;
-    -webkit-line-clamp: 2;
 }
 
 /* Nyast till höger */
@@ -1185,16 +1170,15 @@ html, body {
 }
 
 .proj-age-mid .proj-message-name {
-    font-size: 0.56rem;
+    font-size: 0.7rem;
 }
 
 .proj-age-mid .proj-message-time {
-    font-size: 0.5rem;
+    font-size: 0.62rem;
 }
 
 .proj-age-mid .proj-message-text {
-    font-size: 0.56rem;
-    -webkit-line-clamp: 1;
+    font-size: 0.7rem;
 }
 
 .proj-age-mid .proj-message-avatar {
@@ -1208,15 +1192,15 @@ html, body {
 }
 
 .proj-age-old .proj-message-name {
-    font-size: 0.5rem;
+    font-size: 0.62rem;
 }
 
 .proj-age-old .proj-message-time {
-    font-size: 0.45rem;
+    font-size: 0.56rem;
 }
 
 .proj-age-old .proj-message-text {
-    font-size: 0.5rem;
+    font-size: 0.62rem;
     line-height: 1.05;
     -webkit-line-clamp: 1;
 }
