@@ -58,48 +58,60 @@ const sidebarCombosList = document.getElementById("sidebar-combos");
 // ===== Sidopanel =====
 
 // Bygg upp sidopanelen baserat på TRIGGER_WORDS/COMBOS och aktuellt UNLOCKED_*-state.
-// Upplåsta ord visas med emoji och namn, olåsta visas som "???".
+// Visar endast upplåsta ord/kombos. Räknarna visar fortfarande upplåst/total.
 function buildSidebar() {
     sidebarWordsList.innerHTML = "";
 
-    TRIGGER_WORDS.forEach(w => {
+    const unlockedWords = TRIGGER_WORDS.filter(w => UNLOCKED_WORDS.has(w.word.toLowerCase()));
+    unlockedWords.forEach(w => {
         const li = document.createElement("li");
-        li.className = "sidebar-item" + (UNLOCKED_WORDS.has(w.word.toLowerCase()) ? " unlocked" : " locked");
+        li.className = "sidebar-item unlocked";
         li.id = "sw-" + w.word.toLowerCase().replace(/\s+/g, "-");
-
-        if (UNLOCKED_WORDS.has(w.word.toLowerCase())) {
-            li.innerHTML = `<span class="sw-emoji">${w.emoji}</span><span class="sw-word">${escapeHtml(w.word)}</span>`;
-        } else {
-            li.innerHTML = `<span class="sw-emoji">❓</span><span class="sw-word sw-hidden">???</span>`;
-        }
-
+        li.innerHTML = `<span class="sw-emoji">${w.emoji}</span><span class="sw-word">${escapeHtml(w.word)}</span>`;
         sidebarWordsList.appendChild(li);
     });
+
+    if (unlockedWords.length === 0) {
+        const li = document.createElement("li");
+        li.className = "sidebar-item locked sidebar-empty-words";
+        li.textContent = "Inga ord upplåsta ännu";
+        sidebarWordsList.appendChild(li);
+    }
 
     if (!sidebarCombosList) return;
     sidebarCombosList.innerHTML = "";
 
-    TRIGGER_COMBOS.forEach(c => {
+    const unlockedCombos = TRIGGER_COMBOS.filter(c => UNLOCKED_COMBOS.has(c.key));
+    unlockedCombos.forEach(c => {
         const li = document.createElement("li");
-        li.className = "sidebar-item" + (UNLOCKED_COMBOS.has(c.key) ? " unlocked" : " locked");
+        li.className = "sidebar-item unlocked";
         li.id = "sc-" + c.key;
-
-        if (UNLOCKED_COMBOS.has(c.key)) {
-            li.innerHTML = `<span class="sw-emoji">${c.emoji}</span><span class="sw-word">${escapeHtml(c.description)}</span>`;
-        } else {
-            li.innerHTML = `<span class="sw-emoji">🔒</span><span class="sw-word sw-hidden">???</span>`;
-        }
-
+        li.innerHTML = `<span class="sw-emoji">${c.emoji}</span><span class="sw-word">${escapeHtml(c.description)}</span>`;
         sidebarCombosList.appendChild(li);
     });
+
+    if (unlockedCombos.length === 0) {
+        const li = document.createElement("li");
+        li.className = "sidebar-item locked sidebar-empty-combos";
+        li.textContent = "Inga kombos upplåsta ännu";
+        sidebarCombosList.appendChild(li);
+    }
 }
 
 // Uppdatera ett enskilt ord i sidopanelen när det låses upp live
 function unlockWordInSidebar(word, emoji) {
     UNLOCKED_WORDS.add(word.toLowerCase());
+    const empty = sidebarWordsList.querySelector(".sidebar-empty-words");
+    if (empty) empty.remove();
+
     const id = "sw-" + word.toLowerCase().replace(/\s+/g, "-");
-    const li = document.getElementById(id);
-    if (!li) return;
+    let li = document.getElementById(id);
+    if (!li) {
+        li = document.createElement("li");
+        li.id = id;
+        sidebarWordsList.appendChild(li);
+    }
+
     li.className = "sidebar-item unlocked";
     li.innerHTML = `<span class="sw-emoji">${emoji}</span><span class="sw-word">${escapeHtml(word)}</span>`;
     li.classList.add("just-unlocked");
@@ -110,8 +122,17 @@ function unlockWordInSidebar(word, emoji) {
 // Uppdatera en kombination i sidopanelen när den låses upp live
 function unlockComboInSidebar(key, description, emoji) {
     UNLOCKED_COMBOS.add(key);
-    const li = document.getElementById("sc-" + key);
-    if (!li) return;
+    const empty = sidebarCombosList?.querySelector(".sidebar-empty-combos");
+    if (empty) empty.remove();
+
+    const id = "sc-" + key;
+    let li = document.getElementById(id);
+    if (!li) {
+        li = document.createElement("li");
+        li.id = id;
+        sidebarCombosList?.appendChild(li);
+    }
+
     li.className = "sidebar-item unlocked";
     li.innerHTML = `<span class="sw-emoji">${emoji}</span><span class="sw-word">${escapeHtml(description)}</span>`;
     li.classList.add("just-unlocked");
