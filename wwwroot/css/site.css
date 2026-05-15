@@ -1121,6 +1121,83 @@ html, body {
     color: var(--accent);
 }
 
+.projector-hourly-chart {
+    margin-top: 1rem;
+    padding-top: 0.8rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.projector-hourly-chart-title {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    margin-bottom: 0.45rem;
+}
+
+.projector-hourly-bars {
+    height: 150px;
+    display: grid;
+    grid-template-columns: repeat(16, minmax(0, 1fr));
+    align-items: end;
+    gap: 0.15rem;
+}
+
+.projector-hourly-item {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+}
+
+.projector-hourly-bar {
+    width: 100%;
+    min-height: 3px;
+    background: linear-gradient(180deg, rgba(247, 183, 49, 1), rgba(247, 183, 49, 0.55));
+    border-radius: 3px 3px 0 0;
+    box-shadow: 0 0 0 1px rgba(247, 183, 49, 0.2);
+}
+
+.projector-hourly-item.is-current .projector-hourly-bar {
+    background: linear-gradient(180deg, rgba(255, 226, 155, 1), rgba(247, 183, 49, 0.85));
+}
+
+.projector-hourly-label {
+    margin-top: 0.18rem;
+    font-size: 0.56rem;
+    color: rgba(255, 255, 255, 0.6);
+    line-height: 1;
+    height: 0.56rem;
+}
+
+.projector-latest-vma {
+    margin-top: 0.95rem;
+    padding-top: 0.8rem;
+    border-top: 1px solid rgba(255, 216, 108, 0.22);
+}
+
+.projector-latest-vma .projector-hourly-chart-title {
+    font-size: 0.95rem;
+    color: #ffe29b;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.projector-latest-vma-text {
+    margin-top: 0.3rem;
+    padding: 0.8rem 0.9rem;
+    background: linear-gradient(180deg, rgba(255, 216, 108, 0.22), rgba(255, 216, 108, 0.1));
+    border: 2px solid rgba(255, 216, 108, 0.5);
+    border-left: 6px solid #ffd86c;
+    border-radius: 9px;
+    color: #fff7e5;
+    font-size: clamp(1.05rem, 1.9vw, 1.5rem);
+    font-weight: 700;
+    line-height: 1.36;
+    word-break: break-word;
+    box-shadow: 0 0 0 1px rgba(255, 216, 108, 0.12), 0 10px 24px rgba(0, 0, 0, 0.28);
+}
+
 .proj-message {
     background: rgba(255,255,255,0.05);
     border-left: 3px solid var(--accent);

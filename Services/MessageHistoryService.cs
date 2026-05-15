@@ -287,4 +287,112 @@ public class MessageHistoryService : IHostedService, IDisposable
             return 0;
         }
     }
+
+    public string GetLatestAnnouncementText()
+    {
+        try
+        {
+            DateTime persistedTimestamp = DateTime.MinValue;
+            string persistedText = string.Empty;
+
+            using (var scope = _scopeFactory.CreateScope())
+            {
+                var dbContext = scope.ServiceProvider.GetRequiredService<ChatDbContext>();
+                var latestPersisted = dbContext.Messages
+                    .AsNoTracking()
+                    .Where(m => m.IsAnnouncement)
+                    .OrderByDescending(m => m.Timestamp)
+                    .Select(m => new { m.Timestamp, m.Text })
+                    .FirstOrDefault();
+
+                if (latestPersisted != null)
+                {
+                    persistedTimestamp = latestPersisted.Timestamp;
+                    persistedText = latestPersisted.Text ?? string.Empty;
+                }
+            }
+
+            DateTime pendingTimestamp = DateTime.MinValue;
+            string pendingText = string.Empty;
+
+            lock (_pendingLock)
+            {
+                var latestPending = _pendingMessages
+                    .Where(m => m.IsAnnouncement)
+                    .OrderByDescending(m => m.Timestamp)
+                    .Select(m => new { m.Timestamp, m.Text })
+                    .FirstOrDefault();
+
+                if (latestPending != null)
+                {
+                    pendingTimestamp = latestPending.Timestamp;
+                    pendingText = latestPending.Text ?? string.Empty;
+                }
+            }
+
+            return pendingTimestamp > persistedTimestamp ? pendingText : persistedText;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to fetch latest announcement text.");
+            return string.Empty;
+        }
+    }
+
+    public int[] GetTodayHourlyMessageCounts()
+    {
+        try
+        {
+            var localNow = DateTime.Now;
+            var localDayStart = new DateTime(localNow.Year, localNow.Month, localNow.Day, 0, 0, 0, DateTimeKind.Local);
+            var localDayEnd = localDayStart.AddDays(1);
+
+            var utcStart = localDayStart.ToUniversalTime();
+            var utcEnd = localDayEnd.ToUniversalTime();
+
+            var counts = new int[24];
+
+            using (var scope = _scopeFactory.CreateScope())
+            {
+                var dbContext = scope.ServiceProvider.GetRequiredService<ChatDbContext>();
+
+                var persistedTimestamps = dbContext.Messages
+                    .AsNoTracking()
+                    .Where(m => m.Timestamp >= utcStart && m.Timestamp < utcEnd)
+                    .Select(m => m.Timestamp)
+                    .ToList();
+
+                foreach (var ts in persistedTimestamps)
+                {
+                    var localTs = ts.Kind == DateTimeKind.Utc ? ts.ToLocalTime() : ts;
+                    var hour = localTs.Hour;
+                    if (hour >= 0 && hour <= 23)
+                        counts[hour]++;
+                }
+            }
+
+            lock (_pendingLock)
+            {
+                foreach (var pending in _pendingMessages)
+                {
+                    if (pending.Timestamp < utcStart || pending.Timestamp >= utcEnd)
+                        continue;
+
+                    var localTs = pending.Timestamp.Kind == DateTimeKind.Utc
+                        ? pending.Timestamp.ToLocalTime()
+                        : pending.Timestamp;
+                    var hour = localTs.Hour;
+                    if (hour >= 0 && hour <= 23)
+                        counts[hour]++;
+                }
+            }
+
+            return counts;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to fetch hourly message counts for current day.");
+            return new int[24];
+        }
+    }
 }

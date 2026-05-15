@@ -7,12 +7,21 @@ const projWordsEl = document.getElementById("proj-words");
 const projCombosEl = document.getElementById("proj-combos");
 const projParticipantsEl = document.getElementById("proj-participants");
 const projTotalMessagesEl = document.getElementById("proj-total-messages");
+const projHourlyBarsEl = document.getElementById("proj-hourly-bars");
+const projLatestVmaEl = document.getElementById("proj-latest-vma");
 const triggerOverlay = document.getElementById("trigger-overlay");
 const triggerPopup = document.getElementById("trigger-popup");
 
 const MAX_MESSAGES = 120;
 
 const projectorMessageBuffer = [];
+const hourlyMessageCounts = Array.isArray(HOURLY_MESSAGE_COUNTS)
+    ? [...HOURLY_MESSAGE_COUNTS]
+    : new Array(24).fill(0);
+
+while (hourlyMessageCounts.length < 24) {
+    hourlyMessageCounts.push(0);
+}
 
 const isBraveBrowser = !!navigator.brave;
 const signalrTransportOptions = isBraveBrowser
@@ -78,9 +87,20 @@ connection.on("ReceiveMessage", (username, text, isHighlighted, avatarId, trigge
     lastMessageTime = timestamp;
     addProjMessage(username, text, isHighlighted, avatarId, timestamp, isAnnouncement);
 
+    if (isAnnouncement && projLatestVmaEl) {
+        projLatestVmaEl.textContent = text;
+    }
+
     if (projTotalMessagesEl) {
         const current = parseInt(projTotalMessagesEl.textContent || "0", 10);
         projTotalMessagesEl.textContent = String((Number.isNaN(current) ? 0 : current) + 1);
+    }
+
+    const parsedTimestamp = new Date(timestamp || Date.now());
+    const hourIndex = parsedTimestamp.getHours();
+    if (hourIndex >= 0 && hourIndex <= 23) {
+        hourlyMessageCounts[hourIndex] = (hourlyMessageCounts[hourIndex] || 0) + 1;
+        renderHourlyChart();
     }
 
     if (triggers.totalUnlockedWords !== undefined) {
@@ -132,6 +152,7 @@ connection.on("UpdateParticipantList", (participants) => {
 // });
 
 startConnection();
+renderHourlyChart();
 
 connection.onreconnected(async () => {
     stopManualReconnectLoop();
@@ -297,6 +318,35 @@ function randomJoinColor() {
 
 function addProjJoinMessage(username, avatarId = null) {
     addProjMessage(username, "Är med på festen!", false, avatarId, new Date().toISOString(), false);
+}
+
+function renderHourlyChart() {
+    if (!projHourlyBarsEl) return;
+
+    projHourlyBarsEl.innerHTML = "";
+    const chartHours = [12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 0, 1, 2, 3];
+    const maxValue = Math.max(1, ...chartHours.map(h => hourlyMessageCounts[h] || 0));
+    const currentHour = new Date().getHours();
+
+    for (const hour of chartHours) {
+        const count = hourlyMessageCounts[hour] || 0;
+        const barItem = document.createElement("div");
+        barItem.className = "projector-hourly-item" + (hour === currentHour ? " is-current" : "");
+
+        const bar = document.createElement("div");
+        bar.className = "projector-hourly-bar";
+        const heightPercent = Math.max(4, Math.round((count / maxValue) * 100));
+        bar.style.height = `${heightPercent}%`;
+        bar.title = `${hour.toString().padStart(2, "0")}:00 - ${count} meddelanden`;
+
+        const label = document.createElement("div");
+        label.className = "projector-hourly-label";
+        label.textContent = hour % 3 === 0 ? hour.toString().padStart(2, "0") : "";
+
+        barItem.appendChild(bar);
+        barItem.appendChild(label);
+        projHourlyBarsEl.appendChild(barItem);
+    }
 }
 
 function applyWordHighlights(container, text) {
