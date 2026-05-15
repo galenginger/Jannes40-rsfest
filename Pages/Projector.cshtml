@@ -62,8 +62,8 @@
                     <strong id="proj-total-messages">@Model.TotalMessages</strong>
                 </div>
 
-                <div class="projector-hourly-chart" aria-label="Meddelanden per timme idag">
-                    <div class="projector-hourly-chart-title">Meddelanden per timme idag</div>
+                <div class="projector-hourly-chart" aria-label="Meddelanden senaste 12 timmarna">
+                    <div class="projector-hourly-chart-title">Meddelanden senaste 12 timmarna</div>
                     <div class="projector-hourly-bars" id="proj-hourly-bars"></div>
                 </div>
 
@@ -87,6 +87,7 @@
                                 const TRIGGER_WORDS = @Html.Raw(Model.WordsJson);
                                 const UNLOCKED_WORDS = new Set(@Html.Raw(Model.UnlockedWordSetJson));
                                 const HOURLY_MESSAGE_COUNTS = @Html.Raw(Model.HourlyMessageCountsJson);
+                                const HOURLY_MESSAGE_LABELS = @Html.Raw(Model.HourlyMessageLabelsJson);
     </script>
     <script src="~/js/projector.js" asp-append-version="true"></script>
 }

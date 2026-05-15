@@ -17,10 +17,25 @@ const MAX_MESSAGES = 120;
 const projectorMessageBuffer = [];
 const hourlyMessageCounts = Array.isArray(HOURLY_MESSAGE_COUNTS)
     ? [...HOURLY_MESSAGE_COUNTS]
-    : new Array(24).fill(0);
+    : new Array(12).fill(0);
+const chartHours = Array.isArray(HOURLY_MESSAGE_LABELS)
+    ? [...HOURLY_MESSAGE_LABELS]
+    : new Array(12).fill(0);
 
-while (hourlyMessageCounts.length < 24) {
+while (hourlyMessageCounts.length < 12) {
     hourlyMessageCounts.push(0);
+}
+
+if (hourlyMessageCounts.length > 12) {
+    hourlyMessageCounts.splice(0, hourlyMessageCounts.length - 12);
+}
+
+while (chartHours.length < 12) {
+    chartHours.push(0);
+}
+
+if (chartHours.length > 12) {
+    chartHours.splice(0, chartHours.length - 12);
 }
 
 const isBraveBrowser = !!navigator.brave;
@@ -32,6 +47,13 @@ const connection = new signalR.HubConnectionBuilder()
     .withUrl(SIGNALR_URL, signalrTransportOptions)
     .withAutomaticReconnect()
     .build();
+
+const stockholmTimeFormatter = new Intl.DateTimeFormat("sv-SE", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+    timeZone: "Europe/Stockholm"
+});
 
 let lastMessageTime = null;
 let manualReconnectTimer = null;
@@ -97,9 +119,13 @@ connection.on("ReceiveMessage", (username, text, isHighlighted, avatarId, trigge
     }
 
     const parsedTimestamp = new Date(timestamp || Date.now());
-    const hourIndex = parsedTimestamp.getHours();
-    if (hourIndex >= 0 && hourIndex <= 23) {
-        hourlyMessageCounts[hourIndex] = (hourlyMessageCounts[hourIndex] || 0) + 1;
+    const hourIndex = parseInt(
+        new Intl.DateTimeFormat("sv-SE", { hour: "2-digit", hour12: false, timeZone: "Europe/Stockholm" }).format(parsedTimestamp),
+        10
+    );
+    const visibleIndex = chartHours.indexOf(hourIndex);
+    if (visibleIndex >= 0) {
+        hourlyMessageCounts[visibleIndex] = (hourlyMessageCounts[visibleIndex] || 0) + 1;
         renderHourlyChart();
     }
 
@@ -259,7 +285,7 @@ function createProjMessageElement(message) {
 
     const timeEl = document.createElement("span");
     timeEl.className = "proj-message-time";
-    timeEl.textContent = new Date(message.timestamp || Date.now()).toLocaleTimeString("sv-SE", { hour: "2-digit", minute: "2-digit" });
+    timeEl.textContent = stockholmTimeFormatter.format(new Date(message.timestamp || Date.now()));
 
     header.appendChild(avatarEl);
     header.appendChild(nameEl);
@@ -322,14 +348,16 @@ function addProjJoinMessage(username, avatarId = null) {
 
 function renderHourlyChart() {
     if (!projHourlyBarsEl) return;
-
     projHourlyBarsEl.innerHTML = "";
-    const chartHours = [12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 0, 1, 2, 3];
-    const maxValue = Math.max(1, ...chartHours.map(h => hourlyMessageCounts[h] || 0));
-    const currentHour = new Date().getHours();
+    const maxValue = Math.max(1, ...hourlyMessageCounts);
+    const currentHour = parseInt(
+        new Intl.DateTimeFormat("sv-SE", { hour: "2-digit", hour12: false, timeZone: "Europe/Stockholm" }).format(new Date()),
+        10
+    );
 
-    for (const hour of chartHours) {
-        const count = hourlyMessageCounts[hour] || 0;
+    for (let i = 0; i < chartHours.length; i++) {
+        const hour = chartHours[i];
+        const count = hourlyMessageCounts[i] || 0;
         const barItem = document.createElement("div");
         barItem.className = "projector-hourly-item" + (hour === currentHour ? " is-current" : "");
 
@@ -341,7 +369,7 @@ function renderHourlyChart() {
 
         const label = document.createElement("div");
         label.className = "projector-hourly-label";
-        label.textContent = hour % 3 === 0 ? hour.toString().padStart(2, "0") : "";
+        label.textContent = hour.toString().padStart(2, "0");
 
         barItem.appendChild(bar);
         barItem.appendChild(label);

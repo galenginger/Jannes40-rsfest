@@ -1136,7 +1136,7 @@ html, body {
 .projector-hourly-bars {
     height: 150px;
     display: grid;
-    grid-template-columns: repeat(16, minmax(0, 1fr));
+    grid-template-columns: repeat(12, minmax(0, 1fr));
     align-items: end;
     gap: 0.15rem;
 }

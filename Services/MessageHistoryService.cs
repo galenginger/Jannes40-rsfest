@@ -25,6 +25,35 @@ public class MessageHistoryService : IHostedService, IDisposable
         _logger = logger;
     }
 
+    private static TimeZoneInfo GetEventTimeZone()
+    {
+        try
+        {
+            return TimeZoneInfo.FindSystemTimeZoneById("Europe/Stockholm");
+        }
+        catch
+        {
+            try
+            {
+                return TimeZoneInfo.FindSystemTimeZoneById("W. Europe Standard Time");
+            }
+            catch
+            {
+                return TimeZoneInfo.Local;
+            }
+        }
+    }
+
+    private static DateTime NormalizeToUtc(DateTime value)
+    {
+        return value.Kind switch
+        {
+            DateTimeKind.Utc => value,
+            DateTimeKind.Local => value.ToUniversalTime(),
+            _ => DateTime.SpecifyKind(value, DateTimeKind.Utc)
+        };
+    }
+
     public Task StartAsync(CancellationToken cancellationToken)
     {
         _flushTimer = new Timer(_ => FlushPendingMessages(), null, FlushInterval, FlushInterval);
@@ -159,20 +188,30 @@ public class MessageHistoryService : IHostedService, IDisposable
             using var scope = _scopeFactory.CreateScope();
             var dbContext = scope.ServiceProvider.GetRequiredService<ChatDbContext>();
 
-            var persisted = dbContext.Messages
+            var persistedRows = dbContext.Messages
                 .AsNoTracking()
                 .Where(m => m.Timestamp > since)
                 .OrderBy(m => m.Timestamp)
-                .Select(m => new MessageRecord
+                .Select(m => new
                 {
-                    Username = m.Username,
-                    AvatarId = m.AvatarId,
-                    Text = m.Text,
-                    IsHighlighted = m.IsHighlighted,
-                    IsAnnouncement = m.IsAnnouncement,
-                    Timestamp = m.Timestamp
+                    m.Username,
+                    m.AvatarId,
+                    m.Text,
+                    m.IsHighlighted,
+                    m.IsAnnouncement,
+                    m.Timestamp
                 })
                 .ToList();
+
+            var persisted = persistedRows.Select(m => new MessageRecord
+            {
+                Username = m.Username,
+                AvatarId = m.AvatarId,
+                Text = m.Text,
+                IsHighlighted = m.IsHighlighted,
+                IsAnnouncement = m.IsAnnouncement,
+                Timestamp = NormalizeToUtc(m.Timestamp)
+            }).ToList();
 
             List<MessageRecord> pending;
             lock (_pendingLock)
@@ -187,7 +226,7 @@ public class MessageHistoryService : IHostedService, IDisposable
                         Text = m.Text,
                         IsHighlighted = m.IsHighlighted,
                         IsAnnouncement = m.IsAnnouncement,
-                        Timestamp = m.Timestamp
+                        Timestamp = NormalizeToUtc(m.Timestamp)
                     })
                     .ToList();
             }
@@ -216,21 +255,31 @@ public class MessageHistoryService : IHostedService, IDisposable
             using var scope = _scopeFactory.CreateScope();
             var dbContext = scope.ServiceProvider.GetRequiredService<ChatDbContext>();
 
-            var persisted = dbContext.Messages
+            var persistedRows = dbContext.Messages
                 .AsNoTracking()
                 .OrderByDescending(m => m.Timestamp)
                 .Take(count)
                 .OrderBy(m => m.Timestamp)
-                .Select(m => new MessageRecord
+                .Select(m => new
                 {
-                    Username = m.Username,
-                    AvatarId = m.AvatarId,
-                    Text = m.Text,
-                    IsHighlighted = m.IsHighlighted,
-                    IsAnnouncement = m.IsAnnouncement,
-                    Timestamp = m.Timestamp
+                    m.Username,
+                    m.AvatarId,
+                    m.Text,
+                    m.IsHighlighted,
+                    m.IsAnnouncement,
+                    m.Timestamp
                 })
                 .ToList();
+
+            var persisted = persistedRows.Select(m => new MessageRecord
+            {
+                Username = m.Username,
+                AvatarId = m.AvatarId,
+                Text = m.Text,
+                IsHighlighted = m.IsHighlighted,
+                IsAnnouncement = m.IsAnnouncement,
+                Timestamp = NormalizeToUtc(m.Timestamp)
+            }).ToList();
 
             List<MessageRecord> pending;
             lock (_pendingLock)
@@ -244,7 +293,7 @@ public class MessageHistoryService : IHostedService, IDisposable
                         Text = m.Text,
                         IsHighlighted = m.IsHighlighted,
                         IsAnnouncement = m.IsAnnouncement,
-                        Timestamp = m.Timestamp
+                        Timestamp = NormalizeToUtc(m.Timestamp)
                     })
                     .ToList();
             }
@@ -339,18 +388,28 @@ public class MessageHistoryService : IHostedService, IDisposable
         }
     }
 
-    public int[] GetTodayHourlyMessageCounts()
+    public int[] GetLast12HoursMessageCounts()
     {
         try
         {
-            var localNow = DateTime.Now;
-            var localDayStart = new DateTime(localNow.Year, localNow.Month, localNow.Day, 0, 0, 0, DateTimeKind.Local);
-            var localDayEnd = localDayStart.AddDays(1);
+            var eventTz = GetEventTimeZone();
+            var eventNow = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, eventTz);
+            var eventCurrentHourStart = new DateTime(
+                eventNow.Year,
+                eventNow.Month,
+                eventNow.Day,
+                eventNow.Hour,
+                0,
+                0,
+                DateTimeKind.Unspecified);
 
-            var utcStart = localDayStart.ToUniversalTime();
-            var utcEnd = localDayEnd.ToUniversalTime();
+            var eventWindowStart = eventCurrentHourStart.AddHours(-11);
+            var eventWindowEnd = eventCurrentHourStart.AddHours(1);
 
-            var counts = new int[24];
+            var utcStart = TimeZoneInfo.ConvertTimeToUtc(eventWindowStart, eventTz);
+            var utcEnd = TimeZoneInfo.ConvertTimeToUtc(eventWindowEnd, eventTz);
+
+            var counts = new int[12];
 
             using (var scope = _scopeFactory.CreateScope())
             {
@@ -364,10 +423,15 @@ public class MessageHistoryService : IHostedService, IDisposable
 
                 foreach (var ts in persistedTimestamps)
                 {
-                    var localTs = ts.Kind == DateTimeKind.Utc ? ts.ToLocalTime() : ts;
-                    var hour = localTs.Hour;
-                    if (hour >= 0 && hour <= 23)
-                        counts[hour]++;
+                    var utcTs = NormalizeToUtc(ts);
+                    var eventTs = TimeZoneInfo.ConvertTimeFromUtc(utcTs, eventTz);
+
+                    if (eventTs < eventWindowStart || eventTs >= eventWindowEnd)
+                        continue;
+
+                    var slot = (int)(eventTs - eventWindowStart).TotalHours;
+                    if (slot >= 0 && slot < counts.Length)
+                        counts[slot]++;
                 }
             }
 
@@ -375,15 +439,17 @@ public class MessageHistoryService : IHostedService, IDisposable
             {
                 foreach (var pending in _pendingMessages)
                 {
-                    if (pending.Timestamp < utcStart || pending.Timestamp >= utcEnd)
+                    var pendingUtc = NormalizeToUtc(pending.Timestamp);
+                    if (pendingUtc < utcStart || pendingUtc >= utcEnd)
                         continue;
 
-                    var localTs = pending.Timestamp.Kind == DateTimeKind.Utc
-                        ? pending.Timestamp.ToLocalTime()
-                        : pending.Timestamp;
-                    var hour = localTs.Hour;
-                    if (hour >= 0 && hour <= 23)
-                        counts[hour]++;
+                    var eventTs = TimeZoneInfo.ConvertTimeFromUtc(pendingUtc, eventTz);
+                    if (eventTs < eventWindowStart || eventTs >= eventWindowEnd)
+                        continue;
+
+                    var slot = (int)(eventTs - eventWindowStart).TotalHours;
+                    if (slot >= 0 && slot < counts.Length)
+                        counts[slot]++;
                 }
             }
 
@@ -391,8 +457,23 @@ public class MessageHistoryService : IHostedService, IDisposable
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to fetch hourly message counts for current day.");
-            return new int[24];
+            _logger.LogError(ex, "Failed to fetch hourly message counts for last 12 hours.");
+            return new int[12];
         }
+    }
+
+    public int[] GetLast12HourLabels()
+    {
+        var eventTz = GetEventTimeZone();
+        var eventNow = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, eventTz);
+        var labels = new int[12];
+
+        for (var i = 11; i >= 0; i--)
+        {
+            var hour = eventNow.AddHours(-i).Hour;
+            labels[11 - i] = hour;
+        }
+
+        return labels;
     }
 }
