@@ -43,10 +43,11 @@ builder.Services.Configure<ForwardedHeadersOptions>(options =>
 builder.Services.AddDistributedMemoryCache();
 builder.Services.AddSession(options =>
 {
-    options.IdleTimeout = TimeSpan.FromHours(24);
+    options.IdleTimeout = TimeSpan.FromDays(30);
+    options.Cookie.MaxAge = TimeSpan.FromDays(30);
     options.Cookie.HttpOnly = true;
     options.Cookie.IsEssential = true;
-    options.Cookie.SameSite = SameSiteMode.Strict;
+    options.Cookie.SameSite = SameSiteMode.Lax;
     options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
 });
 

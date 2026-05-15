@@ -6,6 +6,10 @@ namespace DanneFest.Pages;
 
 public class IndexModel : PageModel
 {
+    private const string AuthCookieName = "danne_auth";
+    private const string NameCookieName = "danne_name";
+    private const string AvatarCookieName = "danne_avatar";
+
     private readonly TriggerService _triggerService;
 
     [BindProperty]
@@ -36,7 +40,32 @@ public class IndexModel : PageModel
         if (HttpContext.Session.GetString("authenticated") == "true")
             return RedirectToPage("/Projector");
 
-        SavedName = Request.Cookies["danne_name"] ?? string.Empty;
+        if (Request.Cookies[AuthCookieName] == "1")
+        {
+            HttpContext.Session.SetString("authenticated", "true");
+
+            var cookieName = Request.Cookies[NameCookieName] ?? string.Empty;
+            if (!string.IsNullOrWhiteSpace(cookieName))
+            {
+                var cleanName = cookieName.Trim();
+                if (cleanName.Length > 50)
+                    cleanName = cleanName[..50];
+
+                var avatarFromCookie = NormalizeAvatarId(Request.Cookies[AvatarCookieName]);
+                if (string.IsNullOrWhiteSpace(avatarFromCookie))
+                {
+                    avatarFromCookie = "name-" + cleanName.ToLowerInvariant();
+                }
+
+                HttpContext.Session.SetString("username", cleanName);
+                HttpContext.Session.SetString("avatar_id", avatarFromCookie);
+                return RedirectToPage("/Chat");
+            }
+
+            return RedirectToPage("/Projector");
+        }
+
+        SavedName = Request.Cookies[NameCookieName] ?? string.Empty;
 
         return Page();
     }
@@ -48,11 +77,21 @@ public class IndexModel : PageModel
         if (string.IsNullOrWhiteSpace(Password) || Password != correctPassword)
         {
             ErrorMessage = "Fel lösenord — försök igen!";
-            SavedName = Request.Cookies["danne_name"] ?? string.Empty;
+            SavedName = Request.Cookies[NameCookieName] ?? string.Empty;
             return Page();
         }
 
         HttpContext.Session.SetString("authenticated", "true");
+
+        var cookieOptions = new CookieOptions
+        {
+            Expires = DateTimeOffset.UtcNow.AddDays(30),
+            HttpOnly = true,
+            SameSite = SameSiteMode.Lax,
+            Secure = Request.IsHttps
+        };
+
+        Response.Cookies.Append(AuthCookieName, "1", cookieOptions);
 
         if (!string.IsNullOrWhiteSpace(Username))
         {
@@ -66,13 +105,8 @@ public class IndexModel : PageModel
             HttpContext.Session.SetString("username", cleanName);
             HttpContext.Session.SetString("avatar_id", cleanAvatarId);
 
-            Response.Cookies.Append("danne_name", cleanName, new CookieOptions
-            {
-                Expires = DateTimeOffset.UtcNow.AddHours(12),
-                HttpOnly = false,
-                SameSite = SameSiteMode.Strict,
-                Secure = Request.IsHttps
-            });
+            Response.Cookies.Append(NameCookieName, cleanName, cookieOptions);
+            Response.Cookies.Append(AvatarCookieName, cleanAvatarId, cookieOptions);
 
             return RedirectToPage("/Chat");
         }

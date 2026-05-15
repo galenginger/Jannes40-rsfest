@@ -66,6 +66,9 @@ public class ChatModel : PageModel
     public IActionResult OnPostLogout()
     {
         HttpContext.Session.Clear();
+        Response.Cookies.Delete("danne_auth");
+        Response.Cookies.Delete("danne_name");
+        Response.Cookies.Delete("danne_avatar");
         return RedirectToPage("/Index");
     }
 }
