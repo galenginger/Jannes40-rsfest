@@ -327,12 +327,12 @@ connection.on("ReceiveMessage", (username, text, isHighlighted, avatarId, trigge
     }
 
     // Mini-konfetti om meddelandet innehåller ett redan upplåst triggerord
-    const lowerText = text.toLowerCase();
+    const messageTerms = extractMessageTerms(text);
     const justUnlocked = new Set((triggers.newWords || []).map(w => w.word.toLowerCase()));
     const alreadyFound = TRIGGER_WORDS.some(tw =>
         UNLOCKED_WORDS.has(tw.word.toLowerCase()) &&
         !justUnlocked.has(tw.word.toLowerCase()) &&
-        lowerText.includes(tw.word.toLowerCase())
+        messageTerms.has(tw.word.toLowerCase())
     );
     if (alreadyFound) {
         confetti({ particleCount: 30, spread: 55, origin: { y: 0.65 }, scalar: 0.75, ticks: 90 });
@@ -596,20 +596,39 @@ function addJoinMessage(username, avatarId = null) {
 }
 
 function applyWordHighlights(container, text) {
-    const wordSet = new Set(TRIGGER_WORDS.map(w => w.word.toLowerCase()));
-    const escaped = TRIGGER_WORDS.map(w => w.word.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
-    const pattern = new RegExp(`(${escaped.join("|")})`, "gi");
-    const parts = text.split(pattern);
-    parts.forEach(part => {
-        if (wordSet.has(part.toLowerCase())) {
+    const triggerTerms = new Set(TRIGGER_WORDS.map(w => w.word.toLowerCase()));
+    const tokenPattern = /[\p{L}\p{N}_]+/gu;
+    let lastIndex = 0;
+
+    for (const match of text.matchAll(tokenPattern)) {
+        const token = match[0];
+        const start = match.index ?? 0;
+        const end = start + token.length;
+
+        if (start > lastIndex) {
+            container.appendChild(document.createTextNode(text.slice(lastIndex, start)));
+        }
+
+        if (triggerTerms.has(token.toLowerCase())) {
             const span = document.createElement("span");
             span.className = "trigger-word-highlight";
-            span.textContent = part;
+            span.textContent = token;
             container.appendChild(span);
         } else {
-            container.appendChild(document.createTextNode(part));
+            container.appendChild(document.createTextNode(token));
         }
-    });
+
+        lastIndex = end;
+    }
+
+    if (lastIndex < text.length) {
+        container.appendChild(document.createTextNode(text.slice(lastIndex)));
+    }
+}
+
+function extractMessageTerms(text) {
+    const matches = text.toLowerCase().match(/[\p{L}\p{N}_]+/gu) || [];
+    return new Set(matches);
 }
 
 function escapeHtml(str) {

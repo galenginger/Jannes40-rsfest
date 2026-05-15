@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using DanneFest.Data;
 using DanneFest.Models;
 using Microsoft.Extensions.Logging;
@@ -88,14 +89,16 @@ public class TriggerService
 
         var result = new TriggerResult();
         var lowerMessage = messageText.ToLowerInvariant();
+        var messageTerms = ExtractMessageTerms(lowerMessage);
         var hasNewUnlocks = false;
 
         lock (_lock)
         {
             foreach (var triggerWord in _config.Words)
             {
-                if (lowerMessage.Contains(triggerWord.Word.ToLowerInvariant())
-                    && _unlockedWords.Add(triggerWord.Word.ToLowerInvariant()))
+                var triggerTerm = triggerWord.Word.ToLowerInvariant();
+                if (ContainsTriggerTerm(messageTerms, lowerMessage, triggerTerm)
+                    && _unlockedWords.Add(triggerTerm))
                 {
                     result.NewlyUnlockedWords.Add(triggerWord);
                     hasNewUnlocks = true;
@@ -110,7 +113,7 @@ public class TriggerService
 
                 if (_unlockedCombos.Contains(comboKey)) continue;
 
-                if (combo.Words.All(w => lowerMessage.Contains(w.ToLowerInvariant())))
+                if (combo.Words.All(w => ContainsTriggerTerm(messageTerms, lowerMessage, w.ToLowerInvariant())))
                 {
                     _unlockedCombos.Add(comboKey);
                     result.NewlyUnlockedCombos.Add(combo);
@@ -140,6 +143,35 @@ public class TriggerService
         }
 
         return result;
+    }
+
+    private static HashSet<string> ExtractMessageTerms(string lowerMessage)
+    {
+        var terms = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (Match match in Regex.Matches(lowerMessage, @"[\p{L}\p{N}_]+", RegexOptions.CultureInvariant))
+        {
+            if (!string.IsNullOrWhiteSpace(match.Value))
+            {
+                terms.Add(match.Value);
+            }
+        }
+
+        return terms;
+    }
+
+    private static bool ContainsTriggerTerm(HashSet<string> messageTerms, string lowerMessage, string triggerTerm)
+    {
+        if (string.IsNullOrWhiteSpace(triggerTerm))
+            return false;
+
+        // För enskilda ord/termer krävs exakt termmatchning.
+        if (!triggerTerm.Contains(' '))
+        {
+            return messageTerms.Contains(triggerTerm);
+        }
+
+        // Behåll bakåtkompatibilitet för eventuella flerords-triggers.
+        return lowerMessage.Contains(triggerTerm, StringComparison.Ordinal);
     }
 
     private void LoadPersistedState()

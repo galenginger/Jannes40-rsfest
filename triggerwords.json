@@ -15,8 +15,7 @@
     { "word": "dubbelklick", "emoji": "🖱️" },
     { "word": "sprit", "emoji": "🍸" },
     { "word": "bröller", "emoji": "💒" },
-    { "word": "gt", "emoji": "🍸" },
-    { "word": "yo", "emoji": "👋" }
+    { "word": "gt", "emoji": "🍸" }
   ],
   "combos": [
     {
@@ -32,7 +31,7 @@
     {
       "words": [ "tvättat", "etiopiskt" ],
       "emoji": "👑",
-      "description": "Skål för legenden"
+      "description": "Tvättat etiopiskt"
     }
   ]
 }
