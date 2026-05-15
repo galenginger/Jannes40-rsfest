@@ -1,15 +1,22 @@
 {
   "password": "danne40",
-  "highlightedUsers": ["VIP Danne"],
+  "highlightedUsers": ["Dani"],
   "words": [
     { "word": "grattis", "emoji": "🎉" },
     { "word": "40", "emoji": "🎂" },
-    { "word": "legend", "emoji": "🏆" },
-    { "word": "kärlek", "emoji": "❤️" },
+    { "word": "dani", "emoji": "👑" },
+    { "word": "poggers", "emoji": "🤩" },
     { "word": "skål", "emoji": "🥂" },
-    { "word": "fest", "emoji": "🪩" },
-    { "word": "daniel", "emoji": "🎸" },
-    { "word": "stjärna", "emoji": "⭐" }
+    { "word": "fest", "emoji": "🎊" },
+    { "word": "daniel", "emoji": "👑" },
+    { "word": "kaffe", "emoji": "☕" },
+    { "word": "data", "emoji": "💾" },
+    { "word": "lol", "emoji": "😂" },
+    { "word": "dubbelklick", "emoji": "🖱️" },
+    { "word": "sprit", "emoji": "🍸" },
+    { "word": "bröller", "emoji": "💒" },
+    { "word": "gt", "emoji": "🍸" },
+    { "word": "yo", "emoji": "👋" }
   ],
   "combos": [
     {
@@ -18,12 +25,12 @@
       "description": "Grattis Daniel"
     },
     {
-      "words": [ "kärlek", "40" ],
-      "emoji": "💖",
-      "description": "Kärlek & 40"
+      "words": [ "hoodie", "jeans" ],
+      "emoji": "👕",
+      "description": "Hoodie & Jeans"
     },
     {
-      "words": [ "skål", "legend" ],
+      "words": [ "tvättat", "etiopiskt" ],
       "emoji": "👑",
       "description": "Skål för legenden"
     }
