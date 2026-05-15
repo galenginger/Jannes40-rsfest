@@ -8,18 +8,9 @@ namespace DanneFest.Services;
 // Singleton — trådsäker via _lock.
 public class TriggerService
 {
-    private sealed class PersistedTriggerState
-    {
-        public List<string> UnlockedWords { get; set; } = new();
-        public List<string> UnlockedCombos { get; set; } = new();
-    }
-
     private readonly IWebHostEnvironment _env;
     private readonly ILogger<TriggerService> _logger;
     private readonly IServiceProvider _serviceProvider;
-    private readonly JsonSerializerOptions _jsonOptions = new() { WriteIndented = true };
-    private readonly string _stateDirectory;
-    private readonly string _stateFilePath;
     private TriggerConfig _config = new();
     private readonly object _lock = new();
 
@@ -31,8 +22,6 @@ public class TriggerService
         _env = env;
         _logger = logger;
         _serviceProvider = serviceProvider;
-        _stateDirectory = Path.Combine(_env.ContentRootPath, "App_Data", "runtime-state");
-        _stateFilePath = Path.Combine(_stateDirectory, "trigger-state.json");
     }
 
     public void Initialize(string? passwordOverride = null)
@@ -135,7 +124,19 @@ public class TriggerService
 
         if (hasNewUnlocks)
         {
-            PersistState();
+            var newWords = result.NewlyUnlockedWords
+                .Select(w => w.Word.ToLowerInvariant())
+                .Where(w => !string.IsNullOrWhiteSpace(w))
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToList();
+
+            var newCombos = result.NewlyUnlockedCombos
+                .Select(c => string.Join("+", c.Words.Select(w => w.ToLowerInvariant()).OrderBy(w => w)))
+                .Where(c => !string.IsNullOrWhiteSpace(c))
+                .Distinct(StringComparer.Ordinal)
+                .ToList();
+
+            PersistState(newWords, newCombos);
         }
 
         return result;
@@ -185,18 +186,10 @@ public class TriggerService
         }
     }
 
-    private void PersistState()
+    private void PersistState(List<string> newWords, List<string> newCombos)
     {
-        PersistedTriggerState snapshot;
-
-        lock (_lock)
-        {
-            snapshot = new PersistedTriggerState
-            {
-                UnlockedWords = _unlockedWords.ToList(),
-                UnlockedCombos = _unlockedCombos.ToList()
-            };
-        }
+        if (newWords.Count == 0 && newCombos.Count == 0)
+            return;
 
         try
         {
@@ -204,35 +197,31 @@ public class TriggerService
             using var scope = _serviceProvider.CreateScope();
             var dbContext = scope.ServiceProvider.GetRequiredService<ChatDbContext>();
 
-            // Spara nya order
-            foreach (var word in snapshot.UnlockedWords)
+            foreach (var word in newWords)
             {
-                if (!dbContext.UnlockedTriggers.Any(ut => ut.Type == "word" && ut.TriggerValue == word))
+                dbContext.UnlockedTriggers.Add(new UnlockedTrigger
                 {
-                    dbContext.UnlockedTriggers.Add(new UnlockedTrigger
-                    {
-                        Type = "word",
-                        TriggerValue = word,
-                        UnlockedAt = DateTime.UtcNow
-                    });
-                }
+                    Type = "word",
+                    TriggerValue = word,
+                    UnlockedAt = DateTime.UtcNow
+                });
             }
 
-            // Spara nya combos
-            foreach (var combo in snapshot.UnlockedCombos)
+            foreach (var combo in newCombos)
             {
-                if (!dbContext.UnlockedTriggers.Any(ut => ut.Type == "combo" && ut.TriggerValue == combo))
+                dbContext.UnlockedTriggers.Add(new UnlockedTrigger
                 {
-                    dbContext.UnlockedTriggers.Add(new UnlockedTrigger
-                    {
-                        Type = "combo",
-                        TriggerValue = combo,
-                        UnlockedAt = DateTime.UtcNow
-                    });
-                }
+                    Type = "combo",
+                    TriggerValue = combo,
+                    UnlockedAt = DateTime.UtcNow
+                });
             }
 
             dbContext.SaveChanges();
+        }
+        catch (Microsoft.EntityFrameworkCore.DbUpdateException)
+        {
+            // Unik index-krock vid race condition kan inträffa; ignoreras säkert.
         }
         catch (Exception ex)
         {

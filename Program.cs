@@ -57,7 +57,8 @@ builder.Services.AddDbContext<ChatDbContext>(options =>
 );
 
 builder.Services.AddSingleton<TriggerService>();
-builder.Services.AddScoped<MessageHistoryService>();
+builder.Services.AddSingleton<MessageHistoryService>();
+builder.Services.AddHostedService(sp => sp.GetRequiredService<MessageHistoryService>());
 
 var app = builder.Build();
 

@@ -157,6 +157,13 @@ public class ChatHub : Hub
 
     public Task<List<MessageRecord>> GetHistory(DateTime since)
     {
+        // Klienterna skickar Date(0) vid första anslutning. Begränsa till senaste 100
+        // för att undvika att ladda hela historiken från databasen.
+        if (since <= DateTime.UnixEpoch.AddMinutes(1))
+        {
+            return Task.FromResult(_historyService.GetLatestMessages(100));
+        }
+
         return Task.FromResult(_historyService.GetMessagesSince(since));
     }
 
