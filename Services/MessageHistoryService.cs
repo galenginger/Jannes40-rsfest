@@ -264,4 +264,27 @@ public class MessageHistoryService : IHostedService, IDisposable
             return new List<MessageRecord>();
         }
     }
+
+    public int GetTotalMessageCount()
+    {
+        try
+        {
+            using var scope = _scopeFactory.CreateScope();
+            var dbContext = scope.ServiceProvider.GetRequiredService<ChatDbContext>();
+
+            var persistedCount = dbContext.Messages.AsNoTracking().Count();
+            var pendingCount = 0;
+            lock (_pendingLock)
+            {
+                pendingCount = _pendingMessages.Count;
+            }
+
+            return persistedCount + pendingCount;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to fetch total message count.");
+            return 0;
+        }
+    }
 }

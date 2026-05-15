@@ -7,10 +7,10 @@
 
 @section Styles {
     <style>
-                        body {
-                            overflow: hidden;
-                            background: #0a0a1a;
-                        }
+                            body {
+                                overflow: hidden;
+                                background: #0a0a1a;
+                            }
     </style>
 }
 
@@ -40,12 +40,28 @@
         </div>
     </div>
 
-    @* Meddelandeflöde — stora meddelanden som scrollar uppåt *@
+    @* Projektorlayout: användare (vänster), chatt (mitten), info (höger) *@
     <div class="projector-feed" id="projector-feed">
         <div class="projector-columns" id="projector-columns">
-            <div class="projector-column projector-column-old" id="projector-col-left"></div>
-            <div class="projector-column projector-column-mid" id="projector-col-mid"></div>
-            <div class="projector-column projector-column-new" id="projector-col-right"></div>
+            <section class="projector-panel projector-panel-users">
+                <h2 class="projector-panel-title">Inloggade</h2>
+                <div class="projector-user-list" id="proj-user-list"></div>
+            </section>
+
+            <section class="projector-panel projector-panel-history">
+                <h2 class="projector-panel-title">Chatt</h2>
+                <div class="projector-chat-list" id="projector-chat-list"></div>
+            </section>
+
+            <section class="projector-panel projector-panel-info">
+                <h2 class="projector-text-headline">@Model.ProjectorHeadline</h2>
+                <p class="projector-text-sub">@Model.ProjectorSubtext</p>
+
+                <div class="projector-total-messages">
+                    Totalt antal meddelanden
+                    <strong id="proj-total-messages">@Model.TotalMessages</strong>
+                </div>
+            </section>
         </div>
     </div>
 
@@ -58,8 +74,8 @@
 
 @section Scripts {
     <script>
-                            const TRIGGER_WORDS = @Html.Raw(Model.WordsJson);
-                            const UNLOCKED_WORDS = new Set(@Html.Raw(Model.UnlockedWordSetJson));
+                                const TRIGGER_WORDS = @Html.Raw(Model.WordsJson);
+                                const UNLOCKED_WORDS = new Set(@Html.Raw(Model.UnlockedWordSetJson));
     </script>
     <script src="~/js/projector.js" asp-append-version="true"></script>
 }

@@ -1,20 +1,16 @@
 // projector.js — projektor-läge, tar emot meddelanden men kan inte skicka
 // Visar meddelanden i ett stort rullande flöde för visning på storskärm/projektor
 
-const projColLeft = document.getElementById("projector-col-left");
-const projColMid = document.getElementById("projector-col-mid");
-const projColRight = document.getElementById("projector-col-right");
+const projChatList = document.getElementById("projector-chat-list");
+const projUserList = document.getElementById("proj-user-list");
 const projWordsEl = document.getElementById("proj-words");
 const projCombosEl = document.getElementById("proj-combos");
 const projParticipantsEl = document.getElementById("proj-participants");
+const projTotalMessagesEl = document.getElementById("proj-total-messages");
 const triggerOverlay = document.getElementById("trigger-overlay");
 const triggerPopup = document.getElementById("trigger-popup");
 
-// Tre kolumner: nyast till höger, sedan mitten, sedan vänster (äldst).
-const RIGHT_COLUMN_CAPACITY = 8;
-const MIDDLE_COLUMN_CAPACITY = 18;
-const LEFT_COLUMN_CAPACITY = 16;
-const MAX_MESSAGES = RIGHT_COLUMN_CAPACITY + MIDDLE_COLUMN_CAPACITY + LEFT_COLUMN_CAPACITY;
+const MAX_MESSAGES = 120;
 
 const projectorMessageBuffer = [];
 
@@ -82,6 +78,11 @@ connection.on("ReceiveMessage", (username, text, isHighlighted, avatarId, trigge
     lastMessageTime = timestamp;
     addProjMessage(username, text, isHighlighted, avatarId, timestamp, isAnnouncement);
 
+    if (projTotalMessagesEl) {
+        const current = parseInt(projTotalMessagesEl.textContent || "0", 10);
+        projTotalMessagesEl.textContent = String((Number.isNaN(current) ? 0 : current) + 1);
+    }
+
     if (triggers.totalUnlockedWords !== undefined) {
         projWordsEl.textContent  = triggers.totalUnlockedWords;
         projCombosEl.textContent = triggers.totalUnlockedCombos;
@@ -119,6 +120,10 @@ connection.on("UpdateCounters", (state) => {
 
 connection.on("UpdateParticipants", (count) => {
     projParticipantsEl.textContent = count;
+});
+
+connection.on("UpdateParticipantList", (participants) => {
+    renderParticipantList(participants || []);
 });
 
 // UserJoined-event är inaktiverad
@@ -173,115 +178,45 @@ function addProjMessage(username, text, isHighlighted, avatarId = null, timestam
         projectorMessageBuffer.shift();
     }
 
-    renderProjectorColumns();
+    renderProjectorChat();
 }
 
-function renderProjectorColumns() {
-    // Mäta kolumnernas totala höjd
-    const rightHeight = projColRight.clientHeight;
-    const midHeight = projColMid.clientHeight;
-    const leftHeight = projColLeft.clientHeight;
+function renderProjectorChat() {
+    if (!projChatList) return;
+    projChatList.innerHTML = "";
 
-    // Räkna ut ungefärlig tillgänglig höjd (minus padding/gap)
-    const rightAvailable = rightHeight - 20;
-    const midAvailable = midHeight - 20;
-    const leftAvailable = leftHeight - 20;
+    projectorMessageBuffer.forEach(message => {
+        projChatList.appendChild(createProjMessageElement(message));
+    });
 
-    // Skapa temp-containrar för att mäta höjd på varje meddelande med rätt class
-    const tempRight = document.createElement("div");
-    const tempMid = document.createElement("div");
-    const tempLeft = document.createElement("div");
-    
-    for (let container of [tempRight, tempMid, tempLeft]) {
-        container.style.position = "absolute";
-        container.style.visibility = "hidden";
-        container.style.width = projColRight.clientWidth + "px";
-        container.className = "projector-column";
-        document.body.appendChild(container);
+    projChatList.scrollTop = projChatList.scrollHeight;
+}
+
+function renderParticipantList(participants) {
+    if (!projUserList) return;
+
+    projUserList.innerHTML = "";
+    if (!participants.length) {
+        const empty = document.createElement("div");
+        empty.className = "projector-user-empty";
+        empty.textContent = "Ingen inloggad just nu";
+        projUserList.appendChild(empty);
+        return;
     }
 
-    // Mäta höjd på varje meddelande i varje kolumn-kontext
-    const rightHeights = projectorMessageBuffer.map(msg => {
-        const elem = createProjMessageElement(msg, "proj-age-new");
-        tempRight.appendChild(elem);
-        const height = elem.offsetHeight;
-        tempRight.removeChild(elem);
-        return height;
-    });
-
-    const midHeights = projectorMessageBuffer.map(msg => {
-        const elem = createProjMessageElement(msg, "proj-age-mid");
-        tempMid.appendChild(elem);
-        const height = elem.offsetHeight;
-        tempMid.removeChild(elem);
-        return height;
-    });
-
-    const leftHeights = projectorMessageBuffer.map(msg => {
-        const elem = createProjMessageElement(msg, "proj-age-old");
-        tempLeft.appendChild(elem);
-        const height = elem.offsetHeight;
-        tempLeft.removeChild(elem);
-        return height;
-    });
-
-    document.body.removeChild(tempRight);
-    document.body.removeChild(tempMid);
-    document.body.removeChild(tempLeft);
-
-    // Distribuera meddelanden från nyast bakåt med STRIKT ordning: höger → mitten → vänster
-    let rightMessages = [];
-    let midMessages = [];
-    let leftMessages = [];
-
-    let rightUsed = 0;
-    let midUsed = 0;
-    let leftUsed = 0;
-
-    const gap = 6; // gap mellan meddelanden i CSS
-
-    for (let i = projectorMessageBuffer.length - 1; i >= 0; i--) {
-        const msg = projectorMessageBuffer[i];
-        const rightH = rightHeights[i] + gap;
-        const midH = midHeights[i] + gap;
-        const leftH = leftHeights[i] + gap;
-
-        // MÅSTE fylla höger först, sedan mitten, sedan vänster
-        if (rightUsed + rightH <= rightAvailable) {
-            rightMessages.unshift(msg);
-            rightUsed += rightH;
-        } else if (midUsed + midH <= midAvailable) {
-            // Bara om höger är fullt
-            midMessages.unshift(msg);
-            midUsed += midH;
-        } else if (leftUsed + leftH <= leftAvailable) {
-            // Bara om både höger och mitten är fulla
-            leftMessages.unshift(msg);
-            leftUsed += leftH;
-        }
-        // Om ingen plats alls, ignoreras meddelandet (för gammalt)
-    }
-
-    renderColumn(projColRight, rightMessages, "proj-age-new", RIGHT_COLUMN_CAPACITY);
-    renderColumn(projColMid, midMessages, "proj-age-mid", MIDDLE_COLUMN_CAPACITY);
-    renderColumn(projColLeft, leftMessages, "proj-age-old", LEFT_COLUMN_CAPACITY);
-}
-
-function renderColumn(columnEl, messages, ageClass, capacity) {
-    if (!columnEl) return;
-    columnEl.innerHTML = "";
-
-    messages.forEach(message => {
-        columnEl.appendChild(createProjMessageElement(message, ageClass));
+    participants.forEach(name => {
+        const item = document.createElement("div");
+        item.className = "projector-user-item";
+        item.textContent = name;
+        projUserList.appendChild(item);
     });
 }
 
-function createProjMessageElement(message, ageClass) {
+function createProjMessageElement(message) {
     const msg = document.createElement("div");
     msg.className = "proj-message"
         + (message.isHighlighted ? " highlighted" : "")
-        + (message.isAnnouncement ? " proj-announcement" : "")
-        + " " + ageClass;
+        + (message.isAnnouncement ? " proj-announcement" : "");
 
     const header = document.createElement("div");
     header.className = "proj-message-header";

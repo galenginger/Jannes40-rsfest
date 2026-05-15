@@ -8,18 +8,25 @@ namespace DanneFest.Pages;
 public class ProjectorModel : PageModel
 {
     private readonly TriggerService _triggerService;
+    private readonly MessageHistoryService _historyService;
+    private readonly IWebHostEnvironment _env;
 
     public int TotalWords { get; private set; }
     public int TotalCombos { get; private set; }
     public int UnlockedWords { get; private set; }
     public int UnlockedCombos { get; private set; }
+    public int TotalMessages { get; private set; }
+    public string ProjectorHeadline { get; private set; } = string.Empty;
+    public string ProjectorSubtext { get; private set; } = string.Empty;
 
     public string WordsJson { get; private set; } = "[]";
     public string UnlockedWordSetJson { get; private set; } = "[]";
 
-    public ProjectorModel(TriggerService triggerService)
+    public ProjectorModel(TriggerService triggerService, MessageHistoryService historyService, IWebHostEnvironment env)
     {
         _triggerService = triggerService;
+        _historyService = historyService;
+        _env = env;
     }
 
     public IActionResult OnPostLogout()
@@ -37,6 +44,17 @@ public class ProjectorModel : PageModel
         TotalCombos = _triggerService.TotalComboCount;
         UnlockedWords = _triggerService.UnlockedWordCount;
         UnlockedCombos = _triggerService.UnlockedComboCount;
+        TotalMessages = _historyService.GetTotalMessageCount();
+
+        var projectorTextPath = Path.Combine(_env.ContentRootPath, "projectortext.txt");
+        if (System.IO.File.Exists(projectorTextPath))
+        {
+            var lines = System.IO.File.ReadAllLines(projectorTextPath);
+            if (lines.Length > 0)
+                ProjectorHeadline = lines[0].Trim();
+            if (lines.Length > 1)
+                ProjectorSubtext = lines[1].Trim();
+        }
 
         var opts = new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
         WordsJson = JsonSerializer.Serialize(

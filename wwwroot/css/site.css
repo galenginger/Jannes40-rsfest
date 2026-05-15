@@ -1021,47 +1021,112 @@ html, body {
 .projector-columns {
     flex: 1;
     display: grid;
-    grid-template-columns: 0.7fr 0.88fr 1fr;
+    grid-template-columns: 0.9fr 1.4fr 1fr;
     gap: 0.6rem;
     overflow: hidden;
 }
 
-.projector-column {
-    display: grid;
-    align-content: end;
-    gap: 0.22rem;
+.projector-panel {
+    display: flex;
+    flex-direction: column;
     min-width: 0;
-    padding: 0.2rem 0.25rem 0.15rem;
+    padding: 0.35rem 0.4rem;
     border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 8px;
-    max-height: 100%;
-    overflow-y: auto;
+    overflow: hidden;
 }
 
-.projector-column-new {
-    grid-template-rows: auto;
+.projector-panel-users {
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.015));
+}
+
+.projector-panel-history {
     background: linear-gradient(180deg, rgba(247, 183, 49, 0.06), rgba(247, 183, 49, 0.02));
 }
 
-.projector-column-mid {
-    grid-template-rows: auto;
+.projector-panel-info {
     background: linear-gradient(180deg, rgba(255, 255, 255, 0.035), rgba(255, 255, 255, 0.015));
+    justify-content: flex-start;
 }
 
-.projector-column-old {
-    grid-template-rows: auto;
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0.01));
+.projector-panel-title {
+    margin: 0 0 0.45rem;
+    font-size: 0.95rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--accent);
+    opacity: 0.9;
 }
 
-.proj-slot-empty {
-    min-height: 0;
+.projector-user-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 0.35rem;
+    overflow-y: auto;
+    padding-right: 0.15rem;
+}
+
+.projector-user-item {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 6px;
+    padding: 0.4rem 0.45rem;
+    font-weight: 700;
+    font-size: 0.92rem;
+    color: var(--text);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.projector-user-empty {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+}
+
+.projector-chat-list {
+    flex: 1;
+    overflow-y: auto;
+    padding-right: 0.2rem;
+}
+
+.projector-text-headline {
+    margin: 0;
+    font-size: clamp(1.7rem, 3.2vw, 3.1rem);
+    line-height: 1.1;
+    font-weight: 900;
+    color: #ffe29b;
+}
+
+.projector-text-sub {
+    margin: 0.6rem 0 0;
+    font-size: clamp(0.95rem, 1.7vw, 1.45rem);
+    line-height: 1.35;
+    color: var(--text);
+    opacity: 0.94;
+}
+
+.projector-total-messages {
+    margin-top: 1.15rem;
+    padding-top: 0.9rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.15);
+    color: var(--text-muted);
+    font-size: 0.95rem;
+}
+
+.projector-total-messages strong {
+    display: block;
+    margin-top: 0.3rem;
+    font-size: clamp(1.6rem, 3vw, 2.8rem);
+    color: var(--accent);
 }
 
 .proj-message {
     background: rgba(255,255,255,0.05);
     border-left: 3px solid var(--accent);
     border-radius: 0 8px 8px 0;
-    padding: 0.14rem 0.26rem;
+    padding: 0.28rem 0.36rem;
+    margin-bottom: 0.28rem;
 }
 
 .proj-message.highlighted {
@@ -1134,7 +1199,7 @@ html, body {
 }
 
 .proj-message-name {
-    font-size: 0.82rem;
+    font-size: 0.9rem;
     font-weight: 700;
     color: var(--accent);
     white-space: nowrap;
@@ -1152,62 +1217,11 @@ html, body {
 }
 
 .proj-message-text {
-    font-size: 0.82rem;
+    font-size: 0.96rem;
     font-weight: 500;
     color: var(--text);
     word-break: break-word;
-    line-height: 1.1;
-}
-
-/* Nyast till höger */
-.proj-age-new {
-    opacity: 1;
-}
-
-/* Mitten: mindre text, lite blekare */
-.proj-age-mid {
-    opacity: 0.82;
-}
-
-.proj-age-mid .proj-message-name {
-    font-size: 0.7rem;
-}
-
-.proj-age-mid .proj-message-time {
-    font-size: 0.62rem;
-}
-
-.proj-age-mid .proj-message-text {
-    font-size: 0.7rem;
-}
-
-.proj-age-mid .proj-message-avatar {
-    width: 14px;
-    height: 14px;
-}
-
-/* Äldst till vänster: ännu mindre text + tydligare fade */
-.proj-age-old {
-    opacity: 0.62;
-}
-
-.proj-age-old .proj-message-name {
-    font-size: 0.62rem;
-}
-
-.proj-age-old .proj-message-time {
-    font-size: 0.56rem;
-}
-
-.proj-age-old .proj-message-text {
-    font-size: 0.62rem;
-    line-height: 1.05;
-    -webkit-line-clamp: 1;
-}
-
-.proj-age-old .proj-message-avatar {
-    width: 12px;
-    height: 12px;
+    line-height: 1.22;
 }
 
 .projector-popup { padding: 2rem 4rem; }
@@ -1267,5 +1281,14 @@ html, body {
         flex-direction: column;
         gap: 0.3rem;
         align-items: center;
+    }
+
+    .projector-columns {
+        grid-template-columns: 1fr;
+    }
+
+    .projector-panel-users,
+    .projector-panel-info {
+        min-height: 140px;
     }
 }
