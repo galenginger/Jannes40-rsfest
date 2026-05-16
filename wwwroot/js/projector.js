@@ -9,17 +9,28 @@ const projParticipantsEl = document.getElementById("proj-participants");
 const projTotalMessagesEl = document.getElementById("proj-total-messages");
 const projHourlyBarsEl = document.getElementById("proj-hourly-bars");
 const projLatestVmaEl = document.getElementById("proj-latest-vma");
+const projectorColumnsEl = document.getElementById("projector-columns");
+const projectorSlideshowToggleEl = document.getElementById("projector-slideshow-toggle");
+const projectorSlideshowEl = document.getElementById("projector-slideshow");
+const projectorSlideshowImageEl = document.getElementById("projector-slideshow-image");
+const projectorSlideshowCaptionEl = document.getElementById("projector-slideshow-caption");
 const triggerOverlay = document.getElementById("trigger-overlay");
 const triggerPopup = document.getElementById("trigger-popup");
 
 const MAX_MESSAGES = 120;
+const IMAGE_MESSAGE_PREFIX = "[[IMG]]";
+const SLIDESHOW_START_EVERY_MS = 10 * 60 * 1000;
+const SLIDESHOW_IMAGE_EVERY_MS = 4500;
+const MAX_SLIDESHOW_IMAGES = 20;
 
 const projectorMessageBuffer = [];
+const imageMessageBuffer = [];
 const hourlyMessageCounts = Array.isArray(HOURLY_MESSAGE_COUNTS)
     ? [...HOURLY_MESSAGE_COUNTS]
     : new Array(12).fill(0);
 const chartHours = new Array(12).fill(0);
 let currentChartHour = null;
+let slideshowActive = false;
 
 while (hourlyMessageCounts.length < 12) {
     hourlyMessageCounts.push(0);
@@ -59,6 +70,14 @@ function alignHourlyWindow() {
 }
 
 alignHourlyWindow();
+
+if (projectorSlideshowEl) {
+    projectorSlideshowEl.hidden = true;
+}
+
+if (projectorColumnsEl) {
+    projectorColumnsEl.hidden = false;
+}
 
 const isBraveBrowser = !!navigator.brave;
 const signalrTransportOptions = isBraveBrowser
@@ -130,6 +149,8 @@ async function startConnection() {
 connection.on("ReceiveMessage", (username, text, isHighlighted, avatarId, triggers, timestamp, isAnnouncement = false) => {
     lastMessageTime = timestamp;
     addProjMessage(username, text, isHighlighted, avatarId, timestamp, isAnnouncement);
+    const imagePayload = parseImageMessage(text);
+    const termsSourceText = imagePayload?.caption || text;
 
     if (isAnnouncement && projLatestVmaEl) {
         projLatestVmaEl.textContent = text;
@@ -166,7 +187,7 @@ connection.on("ReceiveMessage", (username, text, isHighlighted, avatarId, trigge
     }
 
     // Mini-konfetti om meddelandet innehåller ett redan upplåst triggerord
-    const messageTerms = extractMessageTerms(text);
+    const messageTerms = extractMessageTerms(termsSourceText);
     const justUnlocked = new Set((triggers.newWords || []).map(w => w.word.toLowerCase()));
     const alreadyFound = TRIGGER_WORDS.some(tw =>
         UNLOCKED_WORDS.has(tw.word.toLowerCase()) &&
@@ -199,6 +220,7 @@ connection.on("UpdateParticipantList", (participants) => {
 
 startConnection();
 renderHourlyChart();
+startSlideshowLoop();
 
 connection.onreconnected(async () => {
     stopManualReconnectLoop();
@@ -232,14 +254,29 @@ window.addEventListener("pageshow", () => {
 
 // Lägger till ett nytt meddelande i projektor-vyn och tar bort gamla om det blir för många
 function addProjMessage(username, text, isHighlighted, avatarId = null, timestamp = null, isAnnouncement = false) {
+    const imagePayload = parseImageMessage(text);
+
     projectorMessageBuffer.push({
         username,
         text,
+        imagePayload,
         isHighlighted,
         avatarId,
         timestamp: timestamp || new Date().toISOString(),
         isAnnouncement
     });
+
+    if (imagePayload) {
+        imageMessageBuffer.push({
+            username,
+            timestamp: timestamp || new Date().toISOString(),
+            imagePayload
+        });
+
+        while (imageMessageBuffer.length > 200) {
+            imageMessageBuffer.shift();
+        }
+    }
 
     while (projectorMessageBuffer.length > MAX_MESSAGES) {
         projectorMessageBuffer.shift();
@@ -256,7 +293,15 @@ function renderProjectorChat() {
         projChatList.appendChild(createProjMessageElement(message));
     });
 
-    projChatList.scrollTop = projChatList.scrollHeight;
+    scrollProjectorChatToBottom();
+}
+
+function scrollProjectorChatToBottom() {
+    if (!projChatList) return;
+
+    requestAnimationFrame(() => {
+        projChatList.scrollTop = projChatList.scrollHeight;
+    });
 }
 
 function renderParticipantList(participants) {
@@ -313,7 +358,26 @@ function createProjMessageElement(message) {
 
     const textEl = document.createElement("div");
     textEl.className = "proj-message-text";
-    applyWordHighlights(textEl, message.text);
+    if (message.imagePayload) {
+        const img = document.createElement("img");
+        img.className = "proj-message-image";
+        img.src = message.imagePayload.url;
+        img.alt = message.imagePayload.caption || "Uppladdad bild";
+        img.loading = "eager";
+        img.decoding = "async";
+        img.addEventListener("load", scrollProjectorChatToBottom, { once: true });
+        img.addEventListener("error", scrollProjectorChatToBottom, { once: true });
+        textEl.appendChild(img);
+
+        if (message.imagePayload.caption) {
+            const captionEl = document.createElement("div");
+            captionEl.className = "proj-message-image-caption";
+            applyWordHighlights(captionEl, message.imagePayload.caption);
+            textEl.appendChild(captionEl);
+        }
+    } else {
+        applyWordHighlights(textEl, message.text);
+    }
 
     msg.appendChild(header);
     msg.appendChild(textEl);
@@ -438,3 +502,125 @@ function escapeHtml(str) {
         .replace(/>/g, "&gt;")
         .replace(/"/g, "&quot;");
 }
+
+function parseImageMessage(text) {
+    if (typeof text !== "string" || !text.startsWith(IMAGE_MESSAGE_PREFIX)) {
+        return null;
+    }
+
+    try {
+        const payload = JSON.parse(text.slice(IMAGE_MESSAGE_PREFIX.length));
+        if (!payload || typeof payload.url !== "string" || !payload.url) {
+            return null;
+        }
+
+        return {
+            url: payload.url,
+            caption: typeof payload.caption === "string" ? payload.caption : ""
+        };
+    } catch {
+        return null;
+    }
+}
+
+function showSlideshow() {
+    if (slideshowActive) {
+        return;
+    }
+
+    if (!projectorSlideshowEl || !projectorColumnsEl || imageMessageBuffer.length === 0) {
+        return;
+    }
+
+    slideshowActive = true;
+
+    projectorColumnsEl.hidden = true;
+    projectorSlideshowEl.hidden = false;
+
+    let slides = imageMessageBuffer
+        .map(item => ({
+            username: item.username,
+            url: item.imagePayload?.url || "",
+            caption: item.imagePayload?.caption || ""
+        }))
+        .filter(item => !!item.url);
+
+    if (slides.length > MAX_SLIDESHOW_IMAGES) {
+        slides = shuffleArray(slides).slice(0, MAX_SLIDESHOW_IMAGES);
+    }
+
+    if (slides.length === 0) {
+        projectorSlideshowEl.hidden = true;
+        projectorColumnsEl.hidden = false;
+        slideshowActive = false;
+        return;
+    }
+
+    let index = 0;
+    let rotationTimer = null;
+
+    const stopSlideshow = () => {
+        if (rotationTimer) {
+            clearInterval(rotationTimer);
+        }
+
+        projectorSlideshowEl.hidden = true;
+        projectorColumnsEl.hidden = false;
+        if (projectorSlideshowImageEl) {
+            projectorSlideshowImageEl.removeAttribute("src");
+        }
+        if (projectorSlideshowCaptionEl) {
+            projectorSlideshowCaptionEl.textContent = "";
+        }
+        slideshowActive = false;
+    };
+
+    const setSlide = () => {
+        if (index >= slides.length) {
+            stopSlideshow();
+            return;
+        }
+
+        const item = slides[index];
+        if (!item) return;
+
+        projectorSlideshowImageEl.src = item.url;
+        const caption = item.caption
+            ? `${item.username}: ${item.caption}`
+            : `Bild uppladdad av ${item.username}`;
+        projectorSlideshowCaptionEl.textContent = caption;
+        index++;
+    };
+
+    setSlide();
+    if (slides.length > 1) {
+        rotationTimer = setInterval(setSlide, SLIDESHOW_IMAGE_EVERY_MS);
+    } else {
+        setTimeout(stopSlideshow, SLIDESHOW_IMAGE_EVERY_MS);
+    }
+}
+
+function shuffleArray(items) {
+    const copy = [...items];
+
+    for (let i = copy.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [copy[i], copy[j]] = [copy[j], copy[i]];
+    }
+
+    return copy;
+}
+
+function startSlideshowLoop() {
+    setInterval(() => {
+        if (imageMessageBuffer.length === 0) {
+            return;
+        }
+
+        showSlideshow();
+    }, SLIDESHOW_START_EVERY_MS);
+}
+
+projectorSlideshowToggleEl?.addEventListener("click", () => {
+    showSlideshow();
+});

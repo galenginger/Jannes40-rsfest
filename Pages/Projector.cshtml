@@ -7,10 +7,10 @@
 
 @section Styles {
     <style>
-                            body {
-                                overflow: hidden;
-                                background: #0a0a1a;
-                            }
+                                        body {
+                                            overflow: hidden;
+                                            background: #0a0a1a;
+                                        }
     </style>
 }
 
@@ -19,9 +19,13 @@
     @* Titelrad *@
     <div class="projector-header">
         <span>Daniel fyller 40!</span>
-        <form method="post" asp-page-handler="Logout">
-            <button type="submit" class="btn-logout proj-logout">Logga ut</button>
-        </form>
+        <div class="projector-header-actions">
+            <button type="button" class="projector-slideshow-toggle" id="projector-slideshow-toggle"
+                    title="Starta bildspel">Bildspel</button>
+            <form method="post" asp-page-handler="Logout">
+                <button type="submit" class="btn-logout proj-logout">Logga ut</button>
+            </form>
+        </div>
     </div>
 
     @* Räknare i projektor-läge *@
@@ -69,9 +73,18 @@
 
                 <div class="projector-latest-vma">
                     <div class="projector-hourly-chart-title">Senaste VMA</div>
-                    <div class="projector-latest-vma-text" id="proj-latest-vma">@(string.IsNullOrWhiteSpace(Model.LatestVmaMessage) ? "Inget VMA ännu" : Model.LatestVmaMessage)</div>
+                    <div class="projector-latest-vma-text" id="proj-latest-vma">
+                        @(string.IsNullOrWhiteSpace(Model.LatestVmaMessage) ? "Inget VMA ännu" : Model.LatestVmaMessage)
+                    </div>
                 </div>
             </section>
+        </div>
+
+        <div class="projector-slideshow" id="projector-slideshow" hidden>
+            <div class="projector-slideshow-stage">
+                <img id="projector-slideshow-image" alt="Bildspel" />
+            </div>
+            <div class="projector-slideshow-caption" id="projector-slideshow-caption"></div>
         </div>
     </div>
 
@@ -84,9 +97,9 @@
 
 @section Scripts {
     <script>
-                                const TRIGGER_WORDS = @Html.Raw(Model.WordsJson);
-                                const UNLOCKED_WORDS = new Set(@Html.Raw(Model.UnlockedWordSetJson));
-                                const HOURLY_MESSAGE_COUNTS = @Html.Raw(Model.HourlyMessageCountsJson);
+                                            const TRIGGER_WORDS = @Html.Raw(Model.WordsJson);
+                                            const UNLOCKED_WORDS = new Set(@Html.Raw(Model.UnlockedWordSetJson));
+                                            const HOURLY_MESSAGE_COUNTS = @Html.Raw(Model.HourlyMessageCountsJson);
     </script>
     <script src="~/js/projector.js" asp-append-version="true"></script>
 }

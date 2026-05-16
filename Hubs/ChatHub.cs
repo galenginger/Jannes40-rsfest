@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using System.Text.Json;
 using DanneFest.Models;
 using DanneFest.Services;
 using Microsoft.AspNetCore.Http.Features;
@@ -9,6 +10,7 @@ namespace DanneFest.Hubs;
 public class ChatHub : Hub
 {
     private const string AnnouncementPrefix = "/!";
+    private const string ImageMessagePrefix = "[[IMG]]";
     private const string AnnouncementUsername = "VMA";
     private const string AnnouncementAvatarId = "announcement-megaphone";
     private static readonly TimeSpan ParticipantActivityTimeout = TimeSpan.FromHours(1);
@@ -191,6 +193,57 @@ public class ChatHub : Hub
             Text = text,
             IsHighlighted = isHighlighted,
             IsAnnouncement = isAnnouncement,
+            Timestamp = timestamp
+        });
+
+        await BroadcastParticipants();
+    }
+
+    public async Task SendImage(string imageUrl, string caption)
+    {
+        if (!_connectionUsers.TryGetValue(Context.ConnectionId, out var user)
+            || string.IsNullOrWhiteSpace(user.Username))
+        {
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(imageUrl))
+            return;
+
+        imageUrl = imageUrl.Trim();
+        if (!imageUrl.StartsWith("/danne/uploads/", StringComparison.OrdinalIgnoreCase)
+            && !imageUrl.StartsWith("/uploads/", StringComparison.OrdinalIgnoreCase))
+        {
+            return;
+        }
+
+        caption = (caption ?? string.Empty).Trim();
+        if (caption.Length > 160)
+            caption = caption[..160];
+
+        var username = user.Username;
+        var avatarId = user.AvatarId;
+        _participantLastActivity[username] = DateTime.UtcNow;
+
+        var payload = JsonSerializer.Serialize(new { url = imageUrl, caption });
+        var text = ImageMessagePrefix + payload;
+        var timestamp = DateTime.UtcNow;
+
+        await Clients.All.SendAsync("ReceiveMessage", username, text, false, avatarId, new
+        {
+            newWords = new List<object>(),
+            newCombos = new List<object>(),
+            totalUnlockedWords = _triggerService.UnlockedWordCount,
+            totalUnlockedCombos = _triggerService.UnlockedComboCount
+        }, timestamp.ToString("O"), false);
+
+        _historyService.Add(new MessageRecord
+        {
+            Username = username,
+            AvatarId = avatarId,
+            Text = text,
+            IsHighlighted = false,
+            IsAnnouncement = false,
             Timestamp = timestamp
         });
 

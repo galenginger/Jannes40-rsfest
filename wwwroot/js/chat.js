@@ -6,9 +6,13 @@ const messagesInner     = document.getElementById("messages-inner");
 const messagesContainer = document.getElementById("messages");
 const messageInput      = document.getElementById("message-input");
 const sendBtn           = document.getElementById("send-btn");
+const uploadImageBtn    = document.getElementById("upload-image-btn");
+const imageInput        = document.getElementById("image-input");
+const uploadTokenInput  = document.querySelector("#upload-token-form input[name='__RequestVerificationToken']");
 const charCounter       = document.getElementById("char-counter");
 const MAX_LENGTH       = 256;
 const MAX_MESSAGES     = 50;  // Max synliga meddelanden i chatt-vyn
+const IMAGE_MESSAGE_PREFIX = "[[IMG]]";
 
 function updateCharCounter() {
     const remaining = MAX_LENGTH - messageInput.value.length;
@@ -325,6 +329,8 @@ window.addEventListener("pageshow", () => {
 connection.on("ReceiveMessage", (username, text, isHighlighted, avatarId, triggers, timestamp, isAnnouncement = false) => {
     lastMessageTime = timestamp;
     addMessage(username, text, isHighlighted, avatarId, timestamp, isAnnouncement);
+    const imagePayload = parseImageMessage(text);
+    const termsSourceText = imagePayload?.caption || text;
 
     if (triggers.totalUnlockedWords !== undefined) {
         updateCounters(triggers.totalUnlockedWords, triggers.totalUnlockedCombos);
@@ -348,7 +354,7 @@ connection.on("ReceiveMessage", (username, text, isHighlighted, avatarId, trigge
     }
 
     // Mini-konfetti om meddelandet innehåller ett redan upplåst triggerord
-    const messageTerms = extractMessageTerms(text);
+    const messageTerms = extractMessageTerms(termsSourceText);
     const justUnlocked = new Set((triggers.newWords || []).map(w => w.word.toLowerCase()));
     const alreadyFound = TRIGGER_WORDS.some(tw =>
         UNLOCKED_WORDS.has(tw.word.toLowerCase()) &&
@@ -440,6 +446,52 @@ function sendMessage() {
     messageInput.focus();
 }
 
+async function uploadImage(file) {
+    if (!file) return;
+
+    const token = uploadTokenInput?.value || "";
+    const formData = new FormData();
+    formData.append("imageFile", file);
+    formData.append("__RequestVerificationToken", token);
+
+    uploadImageBtn.disabled = true;
+    uploadImageBtn.textContent = "Laddar...";
+
+    try {
+        const response = await fetch("?handler=UploadImage", {
+            method: "POST",
+            body: formData,
+            headers: token ? { "RequestVerificationToken": token } : {}
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.error || "Kunde inte ladda upp bilden.");
+        }
+
+        const data = await response.json();
+        const caption = messageInput.value.trim();
+        await connection.invoke("SendImage", data.imageUrl, caption);
+
+        messageInput.value = "";
+        updateCharCounter();
+    } catch (error) {
+        console.error(error);
+        alert(error?.message || "Kunde inte ladda upp bilden.");
+    } finally {
+        uploadImageBtn.disabled = false;
+        uploadImageBtn.textContent = "Bild";
+        imageInput.value = "";
+        messageInput.focus();
+    }
+}
+
+uploadImageBtn?.addEventListener("click", () => imageInput?.click());
+imageInput?.addEventListener("change", () => {
+    const file = imageInput.files && imageInput.files[0] ? imageInput.files[0] : null;
+    if (file) uploadImage(file);
+});
+
 // ===== Hjälpfunktioner =====
 
 function addMessage(username, text, isHighlighted, avatarId = null, timestamp = null, isAnnouncement = false) {
@@ -492,7 +544,26 @@ function addMessage(username, text, isHighlighted, avatarId = null, timestamp = 
 
     const bubble = document.createElement("div");
     bubble.className = "message-bubble";
-    applyWordHighlights(bubble, text);
+    const imagePayload = parseImageMessage(text);
+    if (imagePayload) {
+        bubble.classList.add("message-bubble-image");
+
+        const img = document.createElement("img");
+        img.className = "message-image";
+        img.src = imagePayload.url;
+        img.alt = imagePayload.caption || "Uppladdad bild";
+        img.loading = "lazy";
+        bubble.appendChild(img);
+
+        if (imagePayload.caption) {
+            const captionEl = document.createElement("div");
+            captionEl.className = "message-image-caption";
+            applyWordHighlights(captionEl, imagePayload.caption);
+            bubble.appendChild(captionEl);
+        }
+    } else {
+        applyWordHighlights(bubble, text);
+    }
 
     const time = document.createElement("span");
     time.className = "message-time";
@@ -514,6 +585,26 @@ function addMessage(username, text, isHighlighted, avatarId = null, timestamp = 
     }
 
     onNewMessage();
+}
+
+function parseImageMessage(text) {
+    if (typeof text !== "string" || !text.startsWith(IMAGE_MESSAGE_PREFIX)) {
+        return null;
+    }
+
+    try {
+        const payload = JSON.parse(text.slice(IMAGE_MESSAGE_PREFIX.length));
+        if (!payload || typeof payload.url !== "string" || !payload.url) {
+            return null;
+        }
+
+        return {
+            url: payload.url,
+            caption: typeof payload.caption === "string" ? payload.caption : ""
+        };
+    } catch {
+        return null;
+    }
 }
 
 function updateCounters(words, combos) {

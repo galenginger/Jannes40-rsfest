@@ -2,6 +2,7 @@ using System.Text.Json;
 using DanneFest.Hubs;
 using DanneFest.Models;
 using DanneFest.Services;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
@@ -10,8 +11,15 @@ namespace DanneFest.Pages;
 
 public class ChatModel : PageModel
 {
+    private const long MaxImageBytes = 8 * 1024 * 1024;
+    private static readonly HashSet<string> AllowedImageExtensions = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ".jpg", ".jpeg", ".png", ".gif", ".webp"
+    };
+
     private readonly TriggerService _triggerService;
     private readonly IHubContext<ChatHub> _hubContext;
+    private readonly IWebHostEnvironment _env;
 
     public string Username { get; private set; } = string.Empty;
     public string AvatarId { get; private set; } = string.Empty;
@@ -25,10 +33,44 @@ public class ChatModel : PageModel
     public string UnlockedWordSetJson { get; private set; } = "[]";
     public string UnlockedComboSetJson { get; private set; } = "[]";
 
-    public ChatModel(TriggerService triggerService, IHubContext<ChatHub> hubContext)
+    public ChatModel(TriggerService triggerService, IHubContext<ChatHub> hubContext, IWebHostEnvironment env)
     {
         _triggerService = triggerService;
         _hubContext = hubContext;
+        _env = env;
+    }
+
+    public async Task<IActionResult> OnPostUploadImageAsync(IFormFile? imageFile)
+    {
+        if (HttpContext.Session.GetString("username") is null)
+            return Unauthorized();
+
+        if (imageFile is null || imageFile.Length == 0)
+            return BadRequest(new { error = "Ingen bild vald." });
+
+        if (imageFile.Length > MaxImageBytes)
+            return BadRequest(new { error = "Bilden är för stor. Max 8 MB." });
+
+        var extension = Path.GetExtension(imageFile.FileName);
+        if (!AllowedImageExtensions.Contains(extension))
+            return BadRequest(new { error = "Filtypen stöds inte." });
+
+        if (string.IsNullOrWhiteSpace(imageFile.ContentType) || !imageFile.ContentType.StartsWith("image/", StringComparison.OrdinalIgnoreCase))
+            return BadRequest(new { error = "Ogiltig bildfil." });
+
+        var uploadsDir = Path.Combine(_env.WebRootPath, "uploads");
+        Directory.CreateDirectory(uploadsDir);
+
+        var fileName = $"{DateTime.UtcNow:yyyyMMddHHmmss}_{Guid.NewGuid():N}{extension.ToLowerInvariant()}";
+        var fullPath = Path.Combine(uploadsDir, fileName);
+
+        await using (var stream = System.IO.File.Create(fullPath))
+        {
+            await imageFile.CopyToAsync(stream);
+        }
+
+        var imageUrl = $"{Request.PathBase}/uploads/{fileName}";
+        return new JsonResult(new { imageUrl });
     }
 
     public IActionResult OnGet()
