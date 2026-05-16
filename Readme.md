@@ -87,3 +87,5 @@ dotnet run -- --password pingvin123
 - Session-cookie har `SameSite=Strict` och `HttpOnly=true` för CSRF- och XSS-skydd.
 - Meddelanden renderas via `textContent` (aldrig `innerHTML`) — skyddar mot XSS.
 - Meddelandelängd begränsas till 500 tecken server-side.
+
+695179b

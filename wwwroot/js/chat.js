@@ -13,6 +13,9 @@ const charCounter       = document.getElementById("char-counter");
 const MAX_LENGTH       = 256;
 const MAX_MESSAGES     = 50;  // Max synliga meddelanden i chatt-vyn
 const IMAGE_MESSAGE_PREFIX = "[[IMG]]";
+const MAX_UPLOAD_DIMENSION = 1600;
+const COMPRESS_IF_LARGER_THAN = 700 * 1024;
+const COMPRESSED_IMAGE_QUALITY = 0.82;
 
 function updateCharCounter() {
     const remaining = MAX_LENGTH - messageInput.value.length;
@@ -454,8 +457,9 @@ async function uploadImage(file) {
     if (!file) return;
 
     const token = uploadTokenInput?.value || "";
+    const preparedFile = await prepareImageForUpload(file);
     const formData = new FormData();
-    formData.append("imageFile", file);
+    formData.append("imageFile", preparedFile);
     formData.append("__RequestVerificationToken", token);
 
     uploadImageBtn.disabled = true;
@@ -484,10 +488,84 @@ async function uploadImage(file) {
         alert(error?.message || "Kunde inte ladda upp bilden.");
     } finally {
         uploadImageBtn.disabled = false;
-        uploadImageBtn.textContent = "Bild";
+        uploadImageBtn.textContent = "+";
         imageInput.value = "";
         messageInput.focus();
     }
+}
+
+async function prepareImageForUpload(file) {
+    if (!file || !file.type || !file.type.startsWith("image/")) {
+        return file;
+    }
+
+    if (file.size <= COMPRESS_IF_LARGER_THAN || file.type === "image/gif") {
+        return file;
+    }
+
+    try {
+        const image = await loadImageFromFile(file);
+        const { width, height } = fitWithinBounds(image.naturalWidth || image.width, image.naturalHeight || image.height, MAX_UPLOAD_DIMENSION);
+
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+
+        const context = canvas.getContext("2d");
+        if (!context) {
+            return file;
+        }
+
+        context.drawImage(image, 0, 0, width, height);
+
+        const blob = await canvasToBlob(canvas, "image/jpeg", COMPRESSED_IMAGE_QUALITY);
+        if (!blob) {
+            return file;
+        }
+
+        const baseName = (file.name || "image").replace(/\.[^.]+$/, "");
+        return new File([blob], `${baseName}.jpg`, { type: "image/jpeg", lastModified: Date.now() });
+    } catch (error) {
+        console.warn("Kunde inte komprimera bilden, laddar upp originalet i stället.", error);
+        return file;
+    }
+}
+
+function fitWithinBounds(width, height, maxDimension) {
+    if (!width || !height) {
+        return { width: maxDimension, height: maxDimension };
+    }
+
+    const scale = Math.min(1, maxDimension / Math.max(width, height));
+    return {
+        width: Math.max(1, Math.round(width * scale)),
+        height: Math.max(1, Math.round(height * scale))
+    };
+}
+
+function loadImageFromFile(file) {
+    return new Promise((resolve, reject) => {
+        const image = new Image();
+        const objectUrl = URL.createObjectURL(file);
+
+        image.onload = () => {
+            URL.revokeObjectURL(objectUrl);
+            resolve(image);
+        };
+
+        image.onerror = () => {
+            URL.revokeObjectURL(objectUrl);
+            reject(new Error("Kunde inte läsa bilden."));
+        };
+
+        image.src = objectUrl;
+    });
+}
+
+function canvasToBlob(canvas, type, quality) {
+    return new Promise((resolve) => {
+        canvas.toBlob(blob => resolve(blob), type, quality);
+    });
 }
 
 uploadImageBtn?.addEventListener("click", () => imageInput?.click());
