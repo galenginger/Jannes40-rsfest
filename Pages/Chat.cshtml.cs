@@ -1,6 +1,8 @@
 using System.Text.Json;
+using DanneFest.Hubs;
 using DanneFest.Models;
 using DanneFest.Services;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
@@ -9,6 +11,7 @@ namespace DanneFest.Pages;
 public class ChatModel : PageModel
 {
     private readonly TriggerService _triggerService;
+    private readonly IHubContext<ChatHub> _hubContext;
 
     public string Username { get; private set; } = string.Empty;
     public string AvatarId { get; private set; } = string.Empty;
@@ -22,9 +25,10 @@ public class ChatModel : PageModel
     public string UnlockedWordSetJson { get; private set; } = "[]";
     public string UnlockedComboSetJson { get; private set; } = "[]";
 
-    public ChatModel(TriggerService triggerService)
+    public ChatModel(TriggerService triggerService, IHubContext<ChatHub> hubContext)
     {
         _triggerService = triggerService;
+        _hubContext = hubContext;
     }
 
     public IActionResult OnGet()
@@ -63,8 +67,15 @@ public class ChatModel : PageModel
         return Page();
     }
 
-    public IActionResult OnPostLogout()
+    public async Task<IActionResult> OnPostLogout()
     {
+        var username = HttpContext.Session.GetString("username") ?? string.Empty;
+        ChatHub.MarkParticipantLoggedOut(username);
+
+        var participants = ChatHub.GetActiveParticipantsSnapshot();
+        await _hubContext.Clients.All.SendAsync("UpdateParticipants", participants.Count);
+        await _hubContext.Clients.All.SendAsync("UpdateParticipantList", participants);
+
         HttpContext.Session.Clear();
         Response.Cookies.Delete("danne_auth");
         Response.Cookies.Delete("danne_name");

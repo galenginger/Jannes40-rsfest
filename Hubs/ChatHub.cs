@@ -11,6 +11,7 @@ public class ChatHub : Hub
     private const string AnnouncementPrefix = "/!";
     private const string AnnouncementUsername = "VMA";
     private const string AnnouncementAvatarId = "announcement-megaphone";
+    private static readonly TimeSpan ParticipantActivityTimeout = TimeSpan.FromHours(1);
 
     private sealed class ConnectedUser
     {
@@ -23,6 +24,46 @@ public class ChatHub : Hub
 
     // ConnectionId -> användarnamn (sätts från session, aldrig från klienten)
     private static readonly ConcurrentDictionary<string, ConnectedUser> _connectionUsers = new();
+    // Användarnamn -> senaste aktivitet (connect eller skickat meddelande)
+    private static readonly ConcurrentDictionary<string, DateTime> _participantLastActivity = new(StringComparer.OrdinalIgnoreCase);
+
+    public static void MarkParticipantLoggedOut(string username)
+    {
+        if (string.IsNullOrWhiteSpace(username))
+            return;
+
+        _participantLastActivity.TryRemove(username, out _);
+
+        var toRemove = _connectionUsers
+            .Where(pair => string.Equals(pair.Value.Username, username, StringComparison.OrdinalIgnoreCase))
+            .Select(pair => pair.Key)
+            .ToList();
+
+        foreach (var connectionId in toRemove)
+        {
+            _connectionUsers.TryRemove(connectionId, out _);
+        }
+    }
+
+    public static List<string> GetActiveParticipantsSnapshot()
+    {
+        var now = DateTime.UtcNow;
+
+        foreach (var entry in _participantLastActivity)
+        {
+            if (now - entry.Value > ParticipantActivityTimeout)
+            {
+                _participantLastActivity.TryRemove(entry.Key, out _);
+            }
+        }
+
+        return _participantLastActivity.Keys
+            .Where(u => !string.IsNullOrWhiteSpace(u))
+            .Select(u => u.Trim())
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .OrderBy(u => u, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+    }
 
     public ChatHub(TriggerService triggerService, MessageHistoryService historyService)
     {
@@ -69,6 +110,8 @@ public class ChatHub : Hub
                     Username = username,
                     AvatarId = avatarId
                 };
+
+                _participantLastActivity[username] = DateTime.UtcNow;
             }
         }
 
@@ -88,19 +131,15 @@ public class ChatHub : Hub
     public override async Task OnDisconnectedAsync(Exception? exception)
     {
         _connectionUsers.TryRemove(Context.ConnectionId, out _);
+        // Ta inte bort direkt från deltagarlistan vid disconnect.
+        // Deltagare anses online tills de varit inaktiva i timeout-fönstret.
         await BroadcastParticipants();
         await base.OnDisconnectedAsync(exception);
     }
 
     private Task BroadcastParticipants()
     {
-        var participants = _connectionUsers.Values
-            .Select(u => u.Username)
-            .Where(u => !string.IsNullOrWhiteSpace(u))
-            .Select(u => u.Trim())
-            .Distinct(StringComparer.OrdinalIgnoreCase)
-            .OrderBy(u => u, StringComparer.OrdinalIgnoreCase)
-            .ToList();
+        var participants = GetActiveParticipantsSnapshot();
 
         return Task.WhenAll(
             Clients.All.SendAsync("UpdateParticipants", participants.Count),
@@ -118,6 +157,7 @@ public class ChatHub : Hub
 
         var username = user.Username;
         var avatarId = user.AvatarId;
+        _participantLastActivity[username] = DateTime.UtcNow;
 
         text = text.Trim();
         if (string.IsNullOrWhiteSpace(text) || text.Length > 256) return;
@@ -153,6 +193,8 @@ public class ChatHub : Hub
             IsAnnouncement = isAnnouncement,
             Timestamp = timestamp
         });
+
+        await BroadcastParticipants();
     }
 
     public Task<List<MessageRecord>> GetHistory(DateTime since)
