@@ -10,6 +10,7 @@ namespace DanneFest.Hubs;
 public class ChatHub : Hub
 {
     private const string AnnouncementPrefix = "/!";
+    private const string DeleteImageCommandPrefix = "/rm";
     private const string ImageMessagePrefix = "[[IMG]]";
     private const string AnnouncementUsername = "VMA";
     private const string AnnouncementAvatarId = "announcement-megaphone";
@@ -164,6 +165,19 @@ public class ChatHub : Hub
         text = text.Trim();
         if (string.IsNullOrWhiteSpace(text) || text.Length > 256) return;
 
+        var imageToDelete = TryGetImageDeleteCommandFileName(text);
+        if (!string.IsNullOrWhiteSpace(imageToDelete))
+        {
+            var deleted = _historyService.DeleteImageByFileName(imageToDelete);
+            if (deleted)
+            {
+                await Clients.All.SendAsync("RemoveImageMessages", imageToDelete);
+            }
+
+            await BroadcastParticipants();
+            return;
+        }
+
         var isAnnouncement = text.StartsWith(AnnouncementPrefix, StringComparison.Ordinal);
         if (isAnnouncement)
         {
@@ -225,7 +239,7 @@ public class ChatHub : Hub
         var avatarId = user.AvatarId;
         _participantLastActivity[username] = DateTime.UtcNow;
 
-        var payload = JsonSerializer.Serialize(new { url = imageUrl, caption });
+        var payload = JsonSerializer.Serialize(new { url = imageUrl, caption, fileName = NormalizeImageFileName(imageUrl) });
         var text = ImageMessagePrefix + payload;
         var timestamp = DateTime.UtcNow;
 
@@ -276,5 +290,24 @@ public class ChatHub : Hub
             cleaned = cleaned[..64];
 
         return cleaned;
+    }
+
+    private static string? TryGetImageDeleteCommandFileName(string text)
+    {
+        if (!text.StartsWith(DeleteImageCommandPrefix, StringComparison.OrdinalIgnoreCase))
+            return null;
+
+        var argument = text[DeleteImageCommandPrefix.Length..].Trim();
+        var fileName = NormalizeImageFileName(argument);
+        return string.IsNullOrWhiteSpace(fileName) ? null : fileName;
+    }
+
+    private static string NormalizeImageFileName(string? raw)
+    {
+        if (string.IsNullOrWhiteSpace(raw))
+            return string.Empty;
+
+        var fileName = Path.GetFileName(raw.Trim());
+        return fileName.Length > 200 ? fileName[..200] : fileName;
     }
 }

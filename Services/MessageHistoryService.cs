@@ -1,7 +1,9 @@
 using DanneFest.Data;
 using DanneFest.Models;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using System.Text.Json;
 
 namespace DanneFest.Services;
 
@@ -9,20 +11,118 @@ public class MessageHistoryService : IHostedService, IDisposable
 {
     private const int MaxBatchSize = 25;
     private const int MaxPendingMessages = 2000;
+    private const string ImageMessagePrefix = "[[IMG]]";
     private static readonly TimeSpan FlushInterval = TimeSpan.FromMilliseconds(800);
 
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly ILogger<MessageHistoryService> _logger;
+    private readonly IWebHostEnvironment _env;
     private readonly object _pendingLock = new();
     private List<Message> _pendingMessages = new();
     private Timer? _flushTimer;
     private int _isFlushing;
     private int _flushQueued;
 
-    public MessageHistoryService(IServiceScopeFactory scopeFactory, ILogger<MessageHistoryService> logger)
+    public MessageHistoryService(IServiceScopeFactory scopeFactory, ILogger<MessageHistoryService> logger, IWebHostEnvironment env)
     {
         _scopeFactory = scopeFactory;
         _logger = logger;
+        _env = env;
+    }
+
+    public bool DeleteImageByFileName(string? rawFileName)
+    {
+        var fileName = NormalizeImageFileName(rawFileName);
+        if (string.IsNullOrWhiteSpace(fileName))
+            return false;
+
+        var removedPending = 0;
+        lock (_pendingLock)
+        {
+            removedPending = _pendingMessages.RemoveAll(m => string.Equals(ExtractImageFileName(m.Text), fileName, StringComparison.OrdinalIgnoreCase));
+        }
+
+        var removedPersisted = 0;
+        try
+        {
+            using var scope = _scopeFactory.CreateScope();
+            var dbContext = scope.ServiceProvider.GetRequiredService<ChatDbContext>();
+
+            var candidates = dbContext.Messages
+                .Where(m => m.Text.StartsWith(ImageMessagePrefix))
+                .ToList();
+
+            var toRemove = candidates
+                .Where(m => string.Equals(ExtractImageFileName(m.Text), fileName, StringComparison.OrdinalIgnoreCase))
+                .ToList();
+
+            if (toRemove.Count > 0)
+            {
+                removedPersisted = toRemove.Count;
+                dbContext.Messages.RemoveRange(toRemove);
+                dbContext.SaveChanges();
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to delete image messages for {FileName}.", fileName);
+        }
+
+        var removedFile = DeleteUploadFile(fileName);
+        return removedPending > 0 || removedPersisted > 0 || removedFile;
+    }
+
+    private bool DeleteUploadFile(string fileName)
+    {
+        try
+        {
+            var uploadPath = Path.Combine(_env.WebRootPath, "uploads", fileName);
+            if (!File.Exists(uploadPath))
+                return false;
+
+            File.Delete(uploadPath);
+            return true;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to delete upload file {FileName}.", fileName);
+            return false;
+        }
+    }
+
+    private static string ExtractImageFileName(string? text)
+    {
+        if (string.IsNullOrWhiteSpace(text) || !text.StartsWith(ImageMessagePrefix, StringComparison.Ordinal))
+            return string.Empty;
+
+        try
+        {
+            using var doc = JsonDocument.Parse(text[ImageMessagePrefix.Length..]);
+            if (doc.RootElement.TryGetProperty("fileName", out var fileNameProperty))
+            {
+                return NormalizeImageFileName(fileNameProperty.GetString());
+            }
+
+            if (doc.RootElement.TryGetProperty("url", out var urlProperty))
+            {
+                return NormalizeImageFileName(urlProperty.GetString());
+            }
+        }
+        catch
+        {
+            // Ignore malformed legacy payloads.
+        }
+
+        return string.Empty;
+    }
+
+    private static string NormalizeImageFileName(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+            return string.Empty;
+
+        var fileName = Path.GetFileName(value.Trim());
+        return fileName.Length > 200 ? fileName[..200] : fileName;
     }
 
     private static TimeZoneInfo GetEventTimeZone()

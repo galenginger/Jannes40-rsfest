@@ -31,6 +31,8 @@ const hourlyMessageCounts = Array.isArray(HOURLY_MESSAGE_COUNTS)
 const chartHours = new Array(12).fill(0);
 let currentChartHour = null;
 let slideshowActive = false;
+let slideshowRotationTimer = null;
+let slideshowStopTimer = null;
 
 while (hourlyMessageCounts.length < 12) {
     hourlyMessageCounts.push(0);
@@ -78,6 +80,10 @@ if (projectorSlideshowEl) {
 if (projectorColumnsEl) {
     projectorColumnsEl.hidden = false;
 }
+
+projectorSlideshowImageEl?.addEventListener("click", () => {
+    copyImageFileName(projectorSlideshowImageEl.title || "");
+});
 
 const isBraveBrowser = !!navigator.brave;
 const signalrTransportOptions = isBraveBrowser
@@ -211,6 +217,10 @@ connection.on("UpdateParticipants", (count) => {
 
 connection.on("UpdateParticipantList", (participants) => {
     renderParticipantList(participants || []);
+});
+
+connection.on("RemoveImageMessages", (fileName) => {
+    removeImageMessages(fileName);
 });
 
 // UserJoined-event är inaktiverad
@@ -363,6 +373,12 @@ function createProjMessageElement(message) {
         img.className = "proj-message-image";
         img.src = message.imagePayload.url;
         img.alt = message.imagePayload.caption || "Uppladdad bild";
+        if (message.imagePayload.fileName) {
+            img.title = message.imagePayload.fileName;
+            img.addEventListener("click", () => {
+                copyImageFileName(message.imagePayload.fileName);
+            });
+        }
         img.loading = "eager";
         img.decoding = "async";
         img.addEventListener("load", scrollProjectorChatToBottom, { once: true });
@@ -516,11 +532,107 @@ function parseImageMessage(text) {
 
         return {
             url: payload.url,
-            caption: typeof payload.caption === "string" ? payload.caption : ""
+            caption: typeof payload.caption === "string" ? payload.caption : "",
+            fileName: extractImageFileName(payload)
         };
     } catch {
         return null;
     }
+}
+
+function extractImageFileName(payload) {
+    if (payload && typeof payload.fileName === "string" && payload.fileName) {
+        return payload.fileName.split(/[\\/]/).pop() || payload.fileName;
+    }
+
+    if (payload && typeof payload.url === "string" && payload.url) {
+        return payload.url.split(/[\\/]/).pop() || "";
+    }
+
+    return "";
+}
+
+function normalizeImageFileName(value) {
+    return String(value || "").split(/[\\/]/).pop()?.trim().toLowerCase() || "";
+}
+
+async function copyImageFileName(fileName) {
+    const text = String(fileName || "").trim();
+    if (!text) return;
+
+    try {
+        if (navigator.clipboard?.writeText) {
+            await navigator.clipboard.writeText(text);
+            return;
+        }
+    } catch {
+        // Fall through to legacy copy method.
+    }
+
+    const textarea = document.createElement("textarea");
+    textarea.value = text;
+    textarea.setAttribute("readonly", "readonly");
+    textarea.style.position = "fixed";
+    textarea.style.opacity = "0";
+    document.body.appendChild(textarea);
+    textarea.select();
+
+    try {
+        document.execCommand("copy");
+    } finally {
+        document.body.removeChild(textarea);
+    }
+}
+
+function clearSlideshowTimers() {
+    if (slideshowRotationTimer) {
+        clearInterval(slideshowRotationTimer);
+        slideshowRotationTimer = null;
+    }
+
+    if (slideshowStopTimer) {
+        clearTimeout(slideshowStopTimer);
+        slideshowStopTimer = null;
+    }
+}
+
+function hideSlideshow() {
+    clearSlideshowTimers();
+    projectorSlideshowEl.hidden = true;
+    projectorColumnsEl.hidden = false;
+    if (projectorSlideshowImageEl) {
+        projectorSlideshowImageEl.removeAttribute("src");
+        projectorSlideshowImageEl.removeAttribute("title");
+    }
+    if (projectorSlideshowCaptionEl) {
+        projectorSlideshowCaptionEl.textContent = "";
+    }
+    slideshowActive = false;
+}
+
+function removeImageMessages(fileName) {
+    const normalized = normalizeImageFileName(fileName);
+    if (!normalized) return;
+
+    for (let i = projectorMessageBuffer.length - 1; i >= 0; i--) {
+        const message = projectorMessageBuffer[i];
+        if (normalizeImageFileName(message.imagePayload?.fileName) === normalized) {
+            projectorMessageBuffer.splice(i, 1);
+        }
+    }
+
+    for (let i = imageMessageBuffer.length - 1; i >= 0; i--) {
+        const image = imageMessageBuffer[i];
+        if (normalizeImageFileName(image.imagePayload?.fileName) === normalized) {
+            imageMessageBuffer.splice(i, 1);
+        }
+    }
+
+    if (slideshowActive) {
+        hideSlideshow();
+    }
+
+    renderProjectorChat();
 }
 
 function showSlideshow() {
@@ -541,7 +653,8 @@ function showSlideshow() {
         .map(item => ({
             username: item.username,
             url: item.imagePayload?.url || "",
-            caption: item.imagePayload?.caption || ""
+            caption: item.imagePayload?.caption || "",
+            fileName: item.imagePayload?.fileName || ""
         }))
         .filter(item => !!item.url);
 
@@ -550,34 +663,16 @@ function showSlideshow() {
     }
 
     if (slides.length === 0) {
-        projectorSlideshowEl.hidden = true;
-        projectorColumnsEl.hidden = false;
-        slideshowActive = false;
+        hideSlideshow();
         return;
     }
 
     let index = 0;
-    let rotationTimer = null;
-
-    const stopSlideshow = () => {
-        if (rotationTimer) {
-            clearInterval(rotationTimer);
-        }
-
-        projectorSlideshowEl.hidden = true;
-        projectorColumnsEl.hidden = false;
-        if (projectorSlideshowImageEl) {
-            projectorSlideshowImageEl.removeAttribute("src");
-        }
-        if (projectorSlideshowCaptionEl) {
-            projectorSlideshowCaptionEl.textContent = "";
-        }
-        slideshowActive = false;
-    };
+    clearSlideshowTimers();
 
     const setSlide = () => {
         if (index >= slides.length) {
-            stopSlideshow();
+            hideSlideshow();
             return;
         }
 
@@ -585,6 +680,7 @@ function showSlideshow() {
         if (!item) return;
 
         projectorSlideshowImageEl.src = item.url;
+        projectorSlideshowImageEl.title = item.fileName || "";
         const caption = item.caption
             ? `${item.username}: ${item.caption}`
             : `Bild uppladdad av ${item.username}`;
@@ -594,9 +690,9 @@ function showSlideshow() {
 
     setSlide();
     if (slides.length > 1) {
-        rotationTimer = setInterval(setSlide, SLIDESHOW_IMAGE_EVERY_MS);
+        slideshowRotationTimer = setInterval(setSlide, SLIDESHOW_IMAGE_EVERY_MS);
     } else {
-        setTimeout(stopSlideshow, SLIDESHOW_IMAGE_EVERY_MS);
+        slideshowStopTimer = setTimeout(hideSlideshow, SLIDESHOW_IMAGE_EVERY_MS);
     }
 }
 

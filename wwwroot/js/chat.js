@@ -395,6 +395,10 @@ connection.on("UpdateParticipantList", (participants) => {
     });
 });
 
+connection.on("RemoveImageMessages", (fileName) => {
+    removeImageMessages(fileName);
+});
+
 // UserJoined-event är inaktiverad
 // connection.on("UserJoined", (username) => {
 //     addJoinMessage(username);
@@ -546,13 +550,19 @@ function addMessage(username, text, isHighlighted, avatarId = null, timestamp = 
     bubble.className = "message-bubble";
     const imagePayload = parseImageMessage(text);
     if (imagePayload) {
+        wrapper.dataset.imageFilename = imagePayload.fileName || "";
         bubble.classList.add("message-bubble-image");
 
         const img = document.createElement("img");
         img.className = "message-image";
         img.src = imagePayload.url;
         img.alt = imagePayload.caption || "Uppladdad bild";
-        img.loading = "lazy";
+        if (imagePayload.fileName) {
+            img.title = imagePayload.fileName;
+            img.addEventListener("click", () => {
+                copyImageFileName(imagePayload.fileName);
+            });
+        }
         bubble.appendChild(img);
 
         if (imagePayload.caption) {
@@ -600,11 +610,67 @@ function parseImageMessage(text) {
 
         return {
             url: payload.url,
-            caption: typeof payload.caption === "string" ? payload.caption : ""
+            caption: typeof payload.caption === "string" ? payload.caption : "",
+            fileName: extractImageFileName(payload)
         };
     } catch {
         return null;
     }
+}
+
+async function copyImageFileName(fileName) {
+    const text = String(fileName || "").trim();
+    if (!text) return;
+
+    try {
+        if (navigator.clipboard?.writeText) {
+            await navigator.clipboard.writeText(text);
+            return;
+        }
+    } catch {
+        // Fall through to legacy copy method.
+    }
+
+    const textarea = document.createElement("textarea");
+    textarea.value = text;
+    textarea.setAttribute("readonly", "readonly");
+    textarea.style.position = "fixed";
+    textarea.style.opacity = "0";
+    document.body.appendChild(textarea);
+    textarea.select();
+
+    try {
+        document.execCommand("copy");
+    } finally {
+        document.body.removeChild(textarea);
+    }
+}
+
+function extractImageFileName(payload) {
+    if (payload && typeof payload.fileName === "string" && payload.fileName) {
+        return payload.fileName.split(/[\\/]/).pop() || payload.fileName;
+    }
+
+    if (payload && typeof payload.url === "string" && payload.url) {
+        return payload.url.split(/[\\/]/).pop() || "";
+    }
+
+    return "";
+}
+
+function removeImageMessages(fileName) {
+    const normalized = normalizeImageFileName(fileName);
+    if (!normalized) return;
+
+    Array.from(messagesInner.querySelectorAll(".message[data-image-filename]"))
+        .filter(el => normalizeImageFileName(el.dataset.imageFilename) === normalized)
+        .forEach(el => el.remove());
+
+    scrollToBottom();
+}
+
+function normalizeImageFileName(value) {
+    return String(value || "").split(/[\\/]/).pop()?.trim().toLowerCase() || "";
 }
 
 function updateCounters(words, combos) {
