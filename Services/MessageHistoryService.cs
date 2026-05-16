@@ -392,22 +392,18 @@ public class MessageHistoryService : IHostedService, IDisposable
     {
         try
         {
-            var eventTz = GetEventTimeZone();
-            var eventNow = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, eventTz);
-            var eventCurrentHourStart = new DateTime(
-                eventNow.Year,
-                eventNow.Month,
-                eventNow.Day,
-                eventNow.Hour,
+            var utcNow = DateTime.UtcNow;
+            var utcCurrentHourStart = new DateTime(
+                utcNow.Year,
+                utcNow.Month,
+                utcNow.Day,
+                utcNow.Hour,
                 0,
                 0,
-                DateTimeKind.Unspecified);
+                DateTimeKind.Utc);
 
-            var eventWindowStart = eventCurrentHourStart.AddHours(-11);
-            var eventWindowEnd = eventCurrentHourStart.AddHours(1);
-
-            var utcStart = TimeZoneInfo.ConvertTimeToUtc(eventWindowStart, eventTz);
-            var utcEnd = TimeZoneInfo.ConvertTimeToUtc(eventWindowEnd, eventTz);
+            var utcWindowStart = utcCurrentHourStart.AddHours(-11);
+            var utcWindowEnd = utcCurrentHourStart.AddHours(1);
 
             var counts = new int[12];
 
@@ -417,19 +413,17 @@ public class MessageHistoryService : IHostedService, IDisposable
 
                 var persistedTimestamps = dbContext.Messages
                     .AsNoTracking()
-                    .Where(m => m.Timestamp >= utcStart && m.Timestamp < utcEnd)
+                    .Where(m => m.Timestamp >= utcWindowStart && m.Timestamp < utcWindowEnd)
                     .Select(m => m.Timestamp)
                     .ToList();
 
                 foreach (var ts in persistedTimestamps)
                 {
                     var utcTs = NormalizeToUtc(ts);
-                    var eventTs = TimeZoneInfo.ConvertTimeFromUtc(utcTs, eventTz);
-
-                    if (eventTs < eventWindowStart || eventTs >= eventWindowEnd)
+                    if (utcTs < utcWindowStart || utcTs >= utcWindowEnd)
                         continue;
 
-                    var slot = (int)(eventTs - eventWindowStart).TotalHours;
+                    var slot = (int)(utcTs - utcWindowStart).TotalHours;
                     if (slot >= 0 && slot < counts.Length)
                         counts[slot]++;
                 }
@@ -440,14 +434,10 @@ public class MessageHistoryService : IHostedService, IDisposable
                 foreach (var pending in _pendingMessages)
                 {
                     var pendingUtc = NormalizeToUtc(pending.Timestamp);
-                    if (pendingUtc < utcStart || pendingUtc >= utcEnd)
+                    if (pendingUtc < utcWindowStart || pendingUtc >= utcWindowEnd)
                         continue;
 
-                    var eventTs = TimeZoneInfo.ConvertTimeFromUtc(pendingUtc, eventTz);
-                    if (eventTs < eventWindowStart || eventTs >= eventWindowEnd)
-                        continue;
-
-                    var slot = (int)(eventTs - eventWindowStart).TotalHours;
+                    var slot = (int)(pendingUtc - utcWindowStart).TotalHours;
                     if (slot >= 0 && slot < counts.Length)
                         counts[slot]++;
                 }
@@ -460,20 +450,5 @@ public class MessageHistoryService : IHostedService, IDisposable
             _logger.LogError(ex, "Failed to fetch hourly message counts for last 12 hours.");
             return new int[12];
         }
-    }
-
-    public int[] GetLast12HourLabels()
-    {
-        var eventTz = GetEventTimeZone();
-        var eventNow = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, eventTz);
-        var labels = new int[12];
-
-        for (var i = 11; i >= 0; i--)
-        {
-            var hour = eventNow.AddHours(-i).Hour;
-            labels[11 - i] = hour;
-        }
-
-        return labels;
     }
 }

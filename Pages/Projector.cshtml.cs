@@ -17,7 +17,6 @@ public class ProjectorModel : PageModel
     public int UnlockedCombos { get; private set; }
     public int TotalMessages { get; private set; }
     public string HourlyMessageCountsJson { get; private set; } = "[]";
-    public string HourlyMessageLabelsJson { get; private set; } = "[]";
     public string LatestVmaMessage { get; private set; } = string.Empty;
     public string ProjectorHeadline { get; private set; } = string.Empty;
     public string ProjectorSubtext { get; private set; } = string.Empty;
@@ -52,7 +51,6 @@ public class ProjectorModel : PageModel
         UnlockedCombos = _triggerService.UnlockedComboCount;
         TotalMessages = _historyService.GetTotalMessageCount();
         HourlyMessageCountsJson = JsonSerializer.Serialize(_historyService.GetLast12HoursMessageCounts());
-        HourlyMessageLabelsJson = JsonSerializer.Serialize(_historyService.GetLast12HourLabels());
         LatestVmaMessage = _historyService.GetLatestAnnouncementText();
 
         var projectorTextPath = Path.Combine(_env.ContentRootPath, "projectortext.txt");

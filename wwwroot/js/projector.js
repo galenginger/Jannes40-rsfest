@@ -18,9 +18,8 @@ const projectorMessageBuffer = [];
 const hourlyMessageCounts = Array.isArray(HOURLY_MESSAGE_COUNTS)
     ? [...HOURLY_MESSAGE_COUNTS]
     : new Array(12).fill(0);
-const chartHours = Array.isArray(HOURLY_MESSAGE_LABELS)
-    ? [...HOURLY_MESSAGE_LABELS]
-    : new Array(12).fill(0);
+const chartHours = new Array(12).fill(0);
+let currentChartHour = null;
 
 while (hourlyMessageCounts.length < 12) {
     hourlyMessageCounts.push(0);
@@ -30,13 +29,36 @@ if (hourlyMessageCounts.length > 12) {
     hourlyMessageCounts.splice(0, hourlyMessageCounts.length - 12);
 }
 
-while (chartHours.length < 12) {
-    chartHours.push(0);
+function getStockholmHour(dateValue = new Date()) {
+    return parseInt(
+        new Intl.DateTimeFormat("sv-SE", { hour: "2-digit", hour12: false, timeZone: "Europe/Stockholm" }).format(dateValue),
+        10
+    );
 }
 
-if (chartHours.length > 12) {
-    chartHours.splice(0, chartHours.length - 12);
+function alignHourlyWindow() {
+    const nowHour = getStockholmHour();
+
+    if (currentChartHour === null) {
+        currentChartHour = nowHour;
+        for (let i = 11; i >= 0; i--) {
+            chartHours[11 - i] = (nowHour - i + 24) % 24;
+        }
+        return;
+    }
+
+    let safety = 0;
+    while (currentChartHour !== nowHour && safety < 24) {
+        currentChartHour = (currentChartHour + 1) % 24;
+        chartHours.shift();
+        chartHours.push(currentChartHour);
+        hourlyMessageCounts.shift();
+        hourlyMessageCounts.push(0);
+        safety++;
+    }
 }
+
+alignHourlyWindow();
 
 const isBraveBrowser = !!navigator.brave;
 const signalrTransportOptions = isBraveBrowser
@@ -119,10 +141,8 @@ connection.on("ReceiveMessage", (username, text, isHighlighted, avatarId, trigge
     }
 
     const parsedTimestamp = new Date(timestamp || Date.now());
-    const hourIndex = parseInt(
-        new Intl.DateTimeFormat("sv-SE", { hour: "2-digit", hour12: false, timeZone: "Europe/Stockholm" }).format(parsedTimestamp),
-        10
-    );
+    alignHourlyWindow();
+    const hourIndex = getStockholmHour(parsedTimestamp);
     const visibleIndex = chartHours.indexOf(hourIndex);
     if (visibleIndex >= 0) {
         hourlyMessageCounts[visibleIndex] = (hourlyMessageCounts[visibleIndex] || 0) + 1;
@@ -348,12 +368,10 @@ function addProjJoinMessage(username, avatarId = null) {
 
 function renderHourlyChart() {
     if (!projHourlyBarsEl) return;
+    alignHourlyWindow();
     projHourlyBarsEl.innerHTML = "";
     const maxValue = Math.max(1, ...hourlyMessageCounts);
-    const currentHour = parseInt(
-        new Intl.DateTimeFormat("sv-SE", { hour: "2-digit", hour12: false, timeZone: "Europe/Stockholm" }).format(new Date()),
-        10
-    );
+    const currentHour = getStockholmHour();
 
     for (let i = 0; i < chartHours.length; i++) {
         const hour = chartHours[i];
