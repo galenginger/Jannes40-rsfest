@@ -15,7 +15,13 @@
     { "word": "dubbelklick", "emoji": "🖱️" },
     { "word": "sprit", "emoji": "🍸" },
     { "word": "bröller", "emoji": "💒" },
-    { "word": "gt", "emoji": "🍸" }
+    { "word": "gt", "emoji": "🍸" },
+    { "word": "korv", "emoji": "🌭" },
+    { "word": "öl", "emoji": "🍺" },
+    { "word": "tarkov", "emoji": "🎮" },
+    { "word": "anime", "emoji": "👘" },
+    { "word": "resorb", "emoji": "👑" },
+    { "word": "skål", "emoji": "🥂" }
   ],
   "combos": [
     {
@@ -32,6 +38,16 @@
       "words": [ "tvättat", "etiopiskt" ],
       "emoji": "👑",
       "description": "Tvättat etiopiskt"
+    },
+    {
+      "words": [ "mango", "mango", "mango" ],
+      "emoji": "🥭🥭🥭",
+      "description": "mangomangmango!"
+    },
+    {
+      "words": [ "skål", "dani" ],
+      "emoji": "🥂👑",
+      "description": "Skål Dani"
     }
   ]
 }
