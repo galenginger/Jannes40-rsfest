@@ -23,7 +23,7 @@
                 <label for="username">Namn </label>
                 <div class="username-avatar-row">
                     <input type="text" id="username" name="Username" class="form-input" maxlength="20"
-                           value="@Model.SavedName" autocomplete="off" />
+                           value="@Model.SavedName" autocomplete="nickname" autocorrect="off" spellcheck="false" />
                     <button type="button" id="login-avatar-btn" class="login-avatar-btn"
                             title="Klicka för att slumpa ny avatar">
                         <img id="login-avatar-preview" class="login-avatar-preview" src="" alt="Din avatar" />
@@ -35,7 +35,8 @@
 
             <div class="form-group">
                 <label for="password">Lösenord</label>
-                <input type="password" id="password" name="Password" class="form-input" autocomplete="off" required />
+                <input type="password" id="password" name="Password" class="form-input" autocomplete="current-password"
+                       required />
             </div>
             <button type="submit" class="btn-primary">Logga in</button>
         </form>
